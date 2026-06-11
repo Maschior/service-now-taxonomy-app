@@ -1,0 +1,29 @@
+{
+  "applications": [
+    "Apriso", "CMES", "Cribmaster", "Datametrics", "Dw", "Ease Work",
+    "EDI", "FarolTV", "Gerezim", "IEDPlan", "Ignition", "Laplus",
+    "Manta", "Mastersaf", "MFGTools", "MSQnet", "OMEGA", "Plaquetas",
+    "Softway", "Supervisório", "Taly Profile", "Techwork", "TIA Portal", "VNC", "WI Empanela"
+  ],
+  "tagCategories": ["Fábrica", "Gerais", "Cadastro", "Renotificação", "Script", "Softway"],
+  "tags": {
+    "Fábrica": ["#ATPU", "#Bateria", "#Estágio_10100", "#Falha_RDWeb", "#Geladeira", "#OP_120", "#PLC", "#Restart_IPC", "#TOPSERVER", "#TOUCHSCREEN", "#Usinagem"],
+    "Gerais": ["#Rede", "#Hardware", "#Software", "#Acesso"],
+    "Cadastro": ["#Novo_Usuario", "#Bloqueio", "#Permissao"],
+    "Renotificação": ["#Chamado_Reaberto", "#SLA_Estourado"],
+    "Script": ["#Correção_DB", "#Rotina_Manual"],
+    "Softway": ["#Erro_Integracao", "#Sefaz_Offline"]
+  },
+  "relations": {
+    "Apriso": {
+      "modules": ["Apriso", "Local Support"],
+      "incidents": ["Access Failure", "Access Request", "Application Failure", "Customer Request", "Login Failure", "No Traceability", "Operation Offline", "Process Failure", "Unavailability"],
+      "actions": ["Access Provided", "Access Restored", "Analysis", "Cancelled", "Contingency Action", "Duplicated", "IPC Restart", "Monitoring", "No Action Needed", "No Issues Found", "Operation Restarted", "Restart", "Service Restart", "Solved By Another Team", "TOP Server Start/Restart"]
+    },
+    "CMES": {
+      "modules": ["CMES Core", "Relatórios"],
+      "incidents": ["Bug de Tela", "Falha de Sincronização", "Lentidão"],
+      "actions": ["Correção Aplicada", "Cache Limpo", "Encaminhado N3"]
+    }
+  }
+}
