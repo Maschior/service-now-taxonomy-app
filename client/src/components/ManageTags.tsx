@@ -14,6 +14,9 @@ export default function ManageTags() {
   // Tag state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', categoryId: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Category state
   const [categoryName, setCategoryName] = useState('');
@@ -82,9 +85,47 @@ export default function ManageTags() {
     if (window.confirm('Are you sure?')) {
       try {
         await tagApi.delete(id);
+        setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
         fetchData();
       } catch (err) {
         setError(handleApiError(err));
+      }
+    }
+  };
+
+  const filteredItems = tags.filter(tag => {
+    const matchesName = tag.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter ? tag.categoryId === categoryFilter : true;
+    return matchesName && matchesCategory;
+  });
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredItems.length && filteredItems.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredItems.map(t => t._id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} item(s)?`)) {
+      try {
+        setLoading(true);
+        await Promise.all(selectedIds.map(id => tagApi.delete(id)));
+        setSelectedIds([]);
+        fetchData();
+      } catch (err) {
+        setError(handleApiError(err));
+        setLoading(false);
       }
     }
   };
@@ -159,7 +200,33 @@ export default function ManageTags() {
       </div>
 
       <div className="section-card">
-        <h2 className="text-xl font-semibold p-6 border-b border-white/10">Existing Tags ({tags.length})</h2>
+        <div className="p-6 border-b border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-xl font-semibold m-0">Existing Tags ({filteredItems.length})</h2>
+          <div className="flex gap-2 w-full md:w-auto">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="form-input text-sm w-full md:w-48"
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Filter by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-input text-sm w-full md:w-48"
+            />
+            {selectedIds.length > 0 && (
+              <button onClick={handleBulkDelete} className="btn-primary" style={{ background: '#ef4444', border: 'none' }}>
+                Delete ({selectedIds.length})
+              </button>
+            )}
+          </div>
+        </div>
         {loading ? (
           <div className="p-6 text-center">Loading...</div>
         ) : tags.length === 0 ? (
@@ -169,14 +236,28 @@ export default function ManageTags() {
             <table className="data-table w-full">
               <thead>
                 <tr>
+                  <th className="text-left p-4 w-12">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.length === filteredItems.length && filteredItems.length > 0} 
+                      onChange={toggleSelectAll} 
+                    />
+                  </th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Category</th>
                   <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {tags.map(tag => (
-                  <tr key={tag._id}>
+                {filteredItems.map(tag => (
+                  <tr key={tag._id} className={selectedIds.includes(tag._id) ? "bg-red-500/5" : ""}>
+                    <td className="p-4">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(tag._id)} 
+                        onChange={() => toggleSelectOne(tag._id)} 
+                      />
+                    </td>
                     <td className="p-4 font-mono">{tag.name}</td>
                     <td className="p-4 opacity-70">{getCategoryName(tag.categoryId)}</td>
                     <td className="p-4 text-right space-x-2">

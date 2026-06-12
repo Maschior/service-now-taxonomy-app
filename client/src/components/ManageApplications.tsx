@@ -9,6 +9,8 @@ export default function ManageApplications() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchApplications();
@@ -54,9 +56,43 @@ export default function ManageApplications() {
     if (window.confirm('Are you sure?')) {
       try {
         await applicationApi.delete(id);
+        setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
         fetchApplications();
       } catch (err) {
         setError(handleApiError(err));
+      }
+    }
+  };
+
+  const filteredItems = applications.filter(app => app.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredItems.length && filteredItems.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredItems.map(a => a._id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} item(s)?`)) {
+      try {
+        setLoading(true);
+        await Promise.all(selectedIds.map(id => applicationApi.delete(id)));
+        setSelectedIds([]);
+        fetchApplications();
+      } catch (err) {
+        setError(handleApiError(err));
+        setLoading(false);
       }
     }
   };
@@ -105,7 +141,23 @@ export default function ManageApplications() {
       </div>
 
       <div className="section-card">
-        <h2 className="text-xl font-semibold p-6 border-b border-white/10">Existing Applications ({applications.length})</h2>
+        <div className="p-6 border-b border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-xl font-semibold m-0">Existing Applications ({filteredItems.length})</h2>
+          <div className="flex gap-2 w-full md:w-auto">
+            <input
+              type="text"
+              placeholder="Filter by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-input text-sm w-full md:w-48"
+            />
+            {selectedIds.length > 0 && (
+              <button onClick={handleBulkDelete} className="btn-primary" style={{ background: '#ef4444', border: 'none' }}>
+                Delete ({selectedIds.length})
+              </button>
+            )}
+          </div>
+        </div>
         {loading ? (
           <div className="p-6 text-center">Loading...</div>
         ) : applications.length === 0 ? (
@@ -115,14 +167,28 @@ export default function ManageApplications() {
             <table className="data-table w-full">
               <thead>
                 <tr>
+                  <th className="text-left p-4 w-12">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.length === filteredItems.length && filteredItems.length > 0} 
+                      onChange={toggleSelectAll} 
+                    />
+                  </th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Description</th>
                   <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {applications.map(app => (
-                  <tr key={app._id}>
+                {filteredItems.map(app => (
+                  <tr key={app._id} className={selectedIds.includes(app._id) ? "bg-red-500/5" : ""}>
+                    <td className="p-4">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(app._id)} 
+                        onChange={() => toggleSelectOne(app._id)} 
+                      />
+                    </td>
                     <td className="p-4">{app.name}</td>
                     <td className="p-4 opacity-70">{app.description || '-'}</td>
                     <td className="p-4 text-right space-x-2">
