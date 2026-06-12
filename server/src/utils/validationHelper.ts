@@ -10,6 +10,8 @@ export const escapeRegex = (str: string): string => {
 export const getCaseInsensitiveQuery = (name: string): any => {
   const normalized = normalizeName(name);
   return {
-    $regex: new RegExp(`^${escapeRegex(normalized)}$`, 'i')
+    name: {
+      $regex: new RegExp(`^${escapeRegex(normalized)}$`, 'i')
+    }
   };
 };
