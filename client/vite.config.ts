@@ -6,7 +6,7 @@ const backendTarget = process.env.VITE_API_URL || 'http://localhost:5000';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 4173,
+    port: 5173,
     host: '0.0.0.0',
     proxy: {
       '/api': {
@@ -16,9 +16,8 @@ export default defineConfig({
     }
   },
   preview: {
-    port: 4173,
+    port: 5173,
     host: '0.0.0.0',
-    
     proxy: {
       '/api': {
         target: backendTarget,

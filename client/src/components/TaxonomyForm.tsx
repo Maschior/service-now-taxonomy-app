@@ -513,15 +513,16 @@ export default function TaxonomyForm() {
   return (
     <div className="animate-fade-in-up">
       {/* Header */}
+      
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-5">
         {/* Title (Aligned with Left Column) */}
         <div className="lg:w-1/4 xl:w-1/5 flex-shrink-0">
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          {/* <h1 className="text-xl md:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Taxonomia de Chamados
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
             Monte a short description e resolution notes
-          </p>
+          </p> */}
         </div>
 
         {/* Short Description (Middle) + Action Buttons (Right) */}
@@ -581,101 +582,91 @@ export default function TaxonomyForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
-        
-        {/* LEFT LATERAL: Output Panels + Tags */}
-        <div className="w-full lg:col-span-1 order-2 lg:order-1">
-          <div className="sticky top-20 space-y-4">
+      <div className="flex flex-col gap-4 stagger-children">
+        {/* Row 1: compact Tags and Resolution Notes side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          
+          {/* Resolution Notes compact card */}
+          <div className="output-panel flex flex-col h-full">
+            <div className="output-panel-header py-1.5 px-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={14} style={{ color: 'var(--accent-secondary)' }} />
+                <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Resolution Notes</span>
+              </div>
+              <button
+                onClick={() => handleCopy(resolutionNotes, 'resolution')}
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-lg transition-all duration-200"
+                style={{
+                  color: copiedStates.resolution ? '#22c55e' : 'var(--accent-secondary)',
+                  background: copiedStates.resolution ? 'rgba(34, 197, 94, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                }}
+              >
+                {copiedStates.resolution ? <Check size={12} /> : <Clipboard size={12} />}
+                <span>{copiedStates.resolution ? 'Copiado!' : 'Copiar'}</span>
+              </button>
+            </div>
+            <div className="p-3 bg-secondary/10 flex-1 flex items-center justify-start min-h-[120px]">
+              <pre className="font-mono text-xs whitespace-pre-wrap break-words leading-relaxed w-full" style={{ color: 'var(--text-primary)' }}>
+                {resolutionNotes}
+              </pre>
+            </div>
+          </div>
 
-            {/* Resolution Notes */}
-            <div className="output-panel">
-              <div className="output-panel-header">
-                <div className="flex items-center gap-2">
-                  <AlertCircle size={14} style={{ color: 'var(--accent-secondary)' }} />
-                  <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Resolution Notes</span>
-                </div>
-                <button
-                  onClick={() => handleCopy(resolutionNotes, 'resolution')}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
-                  style={{
-                    color: copiedStates.resolution ? '#22c55e' : 'var(--accent-secondary)',
-                    background: copiedStates.resolution ? 'rgba(34, 197, 94, 0.1)' : 'rgba(139, 92, 246, 0.1)',
-                  }}
-                >
-                  {copiedStates.resolution ? <Check size={12} /> : <Clipboard size={12} />}
-                  {copiedStates.resolution ? 'Copiado!' : 'Copiar'}
-                </button>
+          {/* Tags & Categorias compact card */}
+          <div className="section-card flex flex-col h-full justify-between">
+            <div className="flex items-center gap-2 mb-2 pb-1.5" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+              <div className="p-1 rounded bg-cyan-500/10">
+                <Tag size={14} style={{ color: 'var(--accent-tertiary)' }} />
               </div>
-              <div className="p-5">
-                <pre className="font-mono text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--text-primary)' }}>
-                  {resolutionNotes}
-                </pre>
-              </div>
+              <h2 className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Classificação (Tags)
+              </h2>
             </div>
 
-            {/* Tags & Categorias (moved here from main column) */}
-            <div className="section-card flex flex-col">
-              <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
-                  <Tag size={16} style={{ color: 'var(--accent-tertiary)' }} />
+            <div className="space-y-3 flex-1 flex flex-col justify-between">
+              <div>
+                <label className="block text-[11px] font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>
+                  Categorias
+                </label>
+                <div className="flex flex-wrap gap-1 overflow-y-auto max-h-[50px] p-0.5">
+                  {tagCategories.map(cat => (
+                    <button
+                      key={cat._id}
+                      onClick={() => toggleCategory(cat._id)}
+                      className={`category-tab text-[10px] px-2 py-0.5 ${activeCategories.includes(cat._id) ? 'active' : ''}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
                 </div>
-                <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  Classificação (Tags)
-                </h2>
               </div>
 
-              <div className="space-y-4 flex-1 flex flex-col min-h-0">
-                <div className="flex flex-col min-h-0">
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Categorias
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[60px] p-1">
-                    {tagCategories.map(cat => (
+              <div>
+                <label className="block text-[11px] font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>
+                  Tags {selectedTags.length > 0 && <span style={{ color: 'var(--accent-secondary)' }}>({selectedTags.length})</span>}
+                </label>
+                <div className="flex flex-wrap gap-1 overflow-y-auto max-h-[90px] p-0.5 min-h-[24px]">
+                  {visibleTags.length > 0 ? (
+                    visibleTags.map(tag => (
                       <button
-                        key={cat._id}
-                        onClick={() => toggleCategory(cat._id)}
-                        className={`category-tab text-xs px-2 py-1 ${activeCategories.includes(cat._id) ? 'active' : ''}`}
+                        key={tag._id}
+                        onClick={() => toggleTag(tag._id)}
+                        className={`tag-chip text-[10px] px-2 py-0.5 ${selectedTags.includes(tag._id) ? 'active' : ''}`}
                       >
-                        {cat.name}
+                        {tag.name}
                       </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-col min-h-0">
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Tags
-                    {selectedTags.length > 0 && (
-                      <span className="font-normal ml-1" style={{ color: 'var(--accent-secondary)' }}>
-                        ({selectedTags.length})
-                      </span>
-                    )}
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] p-1 min-h-[28px]">
-                    {visibleTags.length > 0 ? (
-                      visibleTags.map(tag => (
-                        <button
-                          key={tag._id}
-                          onClick={() => toggleTag(tag._id)}
-                          className={`tag-chip text-xs px-2 py-1 ${selectedTags.includes(tag._id) ? 'active' : ''}`}
-                        >
-                          {tag.name}
-                        </button>
-                      ))
-                    ) : (
-                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
-                        {activeCategories.length === 0 ? 'Filtre por categoria acima.' : 'Vazio.'}
-                      </span>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <span className="text-[10px] italic" style={{ color: 'var(--text-muted)' }}>
+                      {activeCategories.length === 0 ? 'Selecione uma categoria.' : 'Nenhuma tag encontrada.'}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* RIGHT/CENTER: Form */}
-        <div className="w-full lg:col-span-3 xl:col-span-4 flex flex-col gap-4 stagger-children order-1 lg:order-2">
+        </div>
           
           {/* Contexto (Application chips + Module chips) - Full Width */}
           <div className="section-card flex flex-col">
@@ -893,6 +884,5 @@ export default function TaxonomyForm() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
