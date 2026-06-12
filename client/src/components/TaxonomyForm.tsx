@@ -551,10 +551,10 @@ export default function TaxonomyForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
         
         {/* LEFT LATERAL: Output Panels + Tags */}
-        <div className="w-full lg:col-span-1 order-2 lg:order-1">
+        <div className="w-full lg:col-span-4 order-2 lg:order-1">
           <div className="sticky top-20 space-y-4">
             {/* Short Description */}
             <div className="output-panel">
@@ -672,7 +672,7 @@ export default function TaxonomyForm() {
         </div>
 
         {/* RIGHT/CENTER: Form */}
-        <div className="w-full lg:col-span-3 xl:col-span-4 flex flex-col gap-4 stagger-children order-1 lg:order-2">
+        <div className="w-full lg:col-span-8 flex flex-col gap-4 stagger-children order-1 lg:order-2">
           
           {/* Contexto (Application chips + Module chips) - Full Width */}
           <div className="section-card flex flex-col">
