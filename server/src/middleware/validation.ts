@@ -36,6 +36,20 @@ export const tagValidation = [
   body('categoryId').isMongoId().withMessage('Valid category ID is required')
 ];
 
+export const closureValidation = [
+  body('shortDescription').trim().notEmpty().withMessage('Short description is required'),
+  body('resolutionNotes').trim().notEmpty().withMessage('Resolution notes is required'),
+  body('applicationId').optional().isMongoId().withMessage('Valid application ID is required'),
+  body('moduleId').optional().isMongoId().withMessage('Valid module ID is required'),
+  body('incidentId').optional().isMongoId().withMessage('Valid incident ID is required'),
+  body('actionId').optional().isMongoId().withMessage('Valid action ID is required'),
+  body('tags').optional().isArray().withMessage('Tags must be an array'),
+  body('tags.*').optional().isMongoId().withMessage('Each tag ID must be a valid Mongo ID'),
+  body('motivo').optional().trim(),
+  body('analise').optional().trim(),
+  body('solucao').optional().trim()
+];
+
 export const idValidation = [
   param('id').isMongoId().withMessage('Valid ID is required')
 ];
