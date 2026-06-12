@@ -626,7 +626,7 @@ export default function TaxonomyForm() {
                   <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Categorias
                   </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[60px] pr-1 pb-1">
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[60px] p-1">
                     {tagCategories.map(cat => (
                       <button
                         key={cat._id}
@@ -648,7 +648,7 @@ export default function TaxonomyForm() {
                       </span>
                     )}
                   </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] pr-1 pb-1 min-h-[28px]">
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] p-1 min-h-[28px]">
                     {visibleTags.length > 0 ? (
                       visibleTags.map(tag => (
                         <button
@@ -702,7 +702,7 @@ export default function TaxonomyForm() {
                     />
                   </div>
                 </label>
-                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] p-1">
                   {searchedApplications.length > 0 ? (
                     searchedApplications.map(a => (
                       <button
@@ -745,7 +745,7 @@ export default function TaxonomyForm() {
                     />
                   </div>
                 </label>
-                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] p-1">
                   {searchedModuleNames.length > 0 ? (
                     searchedModuleNames.map(name => (
                       <button
@@ -799,7 +799,7 @@ export default function TaxonomyForm() {
                     />
                   </div>
                 </label>
-                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] p-1">
                   {searchedIncidents.length > 0 ? (
                     searchedIncidents.map(i => (
                       <button
@@ -837,7 +837,7 @@ export default function TaxonomyForm() {
                     />
                   </div>
                 </label>
-                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] p-1">
                   {searchedActions.length > 0 ? (
                     searchedActions.map(a => (
                       <button
