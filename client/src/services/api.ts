@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Application, Module, Incident, Action, Tag, TagCategory } from '../types/index';
+import { Application, Module, Incident, Action, Tag, TagCategory, Closure } from '../types/index';
 
 const API_BASE_URL = '/api';
 
@@ -55,6 +55,22 @@ export const tagApi = {
 
 export const importApi = {
   importCsv: (csvData: string) => api.post<{ message: string }>('/import', { csvData })
+};
+
+export const closureApi = {
+  getAll: (limit?: number) => api.get<Closure[]>('/closures', { params: { limit } }),
+  create: (data: {
+    shortDescription: string;
+    resolutionNotes: string;
+    applicationId?: string;
+    moduleId?: string;
+    incidentId?: string;
+    actionId?: string;
+    tags?: string[];
+    motivo?: string;
+    analise?: string;
+    solucao?: string;
+  }) => api.post<Closure>('/closures', data)
 };
 
 export const handleApiError = (error: unknown): string => {

@@ -48,6 +48,21 @@ export interface Tag {
   createdAt: string;
 }
 
+export interface Closure {
+  _id: string;
+  shortDescription: string;
+  resolutionNotes: string;
+  applicationId?: string | Application;
+  moduleId?: string | Module;
+  incidentId?: string | Incident;
+  actionId?: string | Action;
+  tags: (string | Tag)[];
+  motivo: string;
+  analise: string;
+  solucao: string;
+  createdAt: string;
+}
+
 export interface TaxonomyData {
   applications: Application[];
   modules: Module[];
