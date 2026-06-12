@@ -11,6 +11,7 @@ import incidentsRouter from './routes/incidents.js';
 import actionsRouter from './routes/actions.js';
 import tagsRouter from './routes/tags.js';
 import importRouter from './routes/import.js';
+import closuresRouter from './routes/closures.js';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/incidents', incidentsRouter);
 app.use('/api/actions', actionsRouter);
 app.use('/api/tags', tagsRouter);
 app.use('/api/import', importRouter);
+app.use('/api/closures', closuresRouter);
 
 app.use(errorHandler);
 
