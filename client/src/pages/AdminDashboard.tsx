@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, handleApiError } from '../services/api';
-import { BarChart3, Package, AlertTriangle, Zap, Tags, ArrowRight, Sparkles, Info } from 'lucide-react';
+import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, importApi, handleApiError } from '../services/api';
+import { BarChart3, Package, AlertTriangle, Zap, Tags, ArrowRight, Sparkles, Info, UploadCloud } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -13,6 +13,11 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Bulk Import state
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchStats();
@@ -44,6 +49,39 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportMsg('');
+    setError(null);
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target?.result as string;
+        if (text) {
+          const res = await importApi.importCsv(text);
+          setImportMsg(res.data.message);
+          fetchStats(); // Refresh stats after import
+        }
+      } catch (err) {
+        setError(handleApiError(err));
+      } finally {
+        setImporting(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+    reader.onerror = () => {
+      setError('Erro ao ler o arquivo CSV.');
+      setImporting(false);
+    };
+    reader.readAsText(file);
+  };
+
   const statCards = [
     { icon: Package, label: 'Applications', value: stats.applications, gradient: 'from-blue-500 to-indigo-500' },
     { icon: BarChart3, label: 'Modules', value: stats.modules, gradient: 'from-emerald-500 to-teal-500' },
@@ -72,8 +110,16 @@ export default function AdminDashboard() {
       </div>
 
       {error && (
-        <div className="section-card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
-          <span style={{ color: '#ef4444' }}>{error}</span>
+        <div className="section-card flex items-center gap-2 py-3" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
+          <AlertTriangle size={18} style={{ color: '#ef4444' }} />
+          <span style={{ color: '#ef4444' }} className="font-medium">{error}</span>
+        </div>
+      )}
+
+      {importMsg && (
+        <div className="section-card flex items-center gap-2 py-3" style={{ borderColor: 'rgba(34, 197, 94, 0.3)', background: 'rgba(34, 197, 94, 0.05)' }}>
+          <Sparkles size={18} style={{ color: '#22c55e' }} />
+          <span style={{ color: '#22c55e' }} className="font-medium">{importMsg}</span>
         </div>
       )}
 
@@ -98,9 +144,58 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Quick Actions & Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="section-card">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Bulk Import */}
+            <div className="section-card lg:col-span-3">
+              <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
+                  <UploadCloud size={18} style={{ color: 'var(--accent-primary)' }} />
+                </div>
+                <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Importar via CSV (ServiceNow)
+                </h2>
+              </div>
+              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
+                <div className="flex-1">
+                  <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
+                    Faça o upload de um arquivo `.csv` contendo os dados de <strong>Short Description</strong> extraídos do Service Now. O formato esperado para cada linha é:
+                  </p>
+                  <code className="block p-3 rounded-lg text-xs" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', border: '1px solid var(--border-primary)' }}>
+                    "Application:Module:Local Support:Incident:Action"
+                  </code>
+                </div>
+                <div className="flex-shrink-0">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={importing}
+                    className="btn-primary py-2 px-6 flex items-center gap-2"
+                  >
+                    {importing ? (
+                      <>
+                        <Sparkles size={16} className="animate-pulse" />
+                        <span>Importando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud size={16} />
+                        <span>Selecionar Arquivo CSV</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="section-card lg:col-span-1">
               <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
                 Ações Rápidas
               </h2>
@@ -125,7 +220,8 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="section-card">
+            {/* Info */}
+            <div className="section-card lg:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <Info size={16} style={{ color: 'var(--accent-primary)' }} />
                 <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>

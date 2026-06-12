@@ -51,6 +51,10 @@ export const tagApi = {
   createCategory: (data: Partial<TagCategory>) => api.post<TagCategory>('/tags/categories', data)
 };
 
+export const importApi = {
+  importCsv: (csvData: string) => api.post<{ message: string }>('/import', { csvData })
+};
+
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.data?.error) {

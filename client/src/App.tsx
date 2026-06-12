@@ -12,7 +12,7 @@ function App() {
   return (
     <Router>
       <Navbar />
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="w-full px-4 md:px-8 py-6">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/admin" element={<AdminDashboard />} />

@@ -10,6 +10,7 @@ import modulesRouter from './routes/modules.js';
 import incidentsRouter from './routes/incidents.js';
 import actionsRouter from './routes/actions.js';
 import tagsRouter from './routes/tags.js';
+import importRouter from './routes/import.js';
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -32,6 +33,7 @@ app.use('/api/modules', modulesRouter);
 app.use('/api/incidents', incidentsRouter);
 app.use('/api/actions', actionsRouter);
 app.use('/api/tags', tagsRouter);
+app.use('/api/import', importRouter);
 
 app.use(errorHandler);
 

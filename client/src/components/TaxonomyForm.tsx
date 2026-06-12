@@ -327,26 +327,84 @@ export default function TaxonomyForm() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* LEFT: Form */}
-        <div className="w-full lg:w-2/3 flex flex-col gap-4 stagger-children">
+      <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+        
+        {/* LEFT LATERAL: Output Panels */}
+        <div className="w-full lg:col-span-1 order-2 lg:order-1">
+          <div className="sticky top-20 space-y-4">
+            {/* Short Description */}
+            <div className="output-panel">
+              <div className="output-panel-header">
+                <div className="flex items-center gap-2">
+                  <FileText size={14} style={{ color: 'var(--accent-primary)' }} />
+                  <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Short Description</span>
+                </div>
+                <button
+                  onClick={() => handleCopy(shortDescription, 'short')}
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
+                  style={{
+                    color: copiedStates.short ? 'var(--success-color)' : 'var(--accent-primary)',
+                    background: copiedStates.short ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
+                  }}
+                >
+                  {copiedStates.short ? <Check size={12} /> : <Clipboard size={12} />}
+                  {copiedStates.short ? 'Copiado!' : 'Copiar'}
+                </button>
+              </div>
+              <div className="p-5">
+                <p
+                  className="font-mono text-sm whitespace-pre-wrap break-words"
+                  style={{ color: shortDescription ? 'var(--text-primary)' : 'var(--text-muted)', fontStyle: shortDescription ? 'normal' : 'italic' }}>
+                  {shortDescription || "Aguardando seleções completas..."}
+                </p>
+              </div>
+            </div>
 
-          {/* Top Row: Contexto & Problema */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Resolution Notes */}
+            <div className="output-panel">
+              <div className="output-panel-header">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={14} style={{ color: 'var(--accent-secondary)' }} />
+                  <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Resolution Notes</span>
+                </div>
+                <button
+                  onClick={() => handleCopy(resolutionNotes, 'resolution')}
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
+                  style={{
+                    color: copiedStates.resolution ? '#22c55e' : 'var(--accent-secondary)',
+                    background: copiedStates.resolution ? 'rgba(34, 197, 94, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                  }}
+                >
+                  {copiedStates.resolution ? <Check size={12} /> : <Clipboard size={12} />}
+                  {copiedStates.resolution ? 'Copiado!' : 'Copiar'}
+                </button>
+              </div>
+              <div className="p-5">
+                <pre className="font-mono text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--text-primary)' }}>
+                  {resolutionNotes}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT/CENTER: Form */}
+        <div className="w-full lg:col-span-3 xl:col-span-4 flex flex-col gap-4 stagger-children order-1 lg:order-2">
+          {/* TOP ROW: Contexto & Tags (Lado a Lado) */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             
-            {/* Section 1: Contexto */}
+            {/* Contexto */}
             <div className="section-card flex flex-col">
               <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
                 <div className="p-1.5 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
                   <LayoutTemplate size={16} style={{ color: 'var(--accent-primary)' }} />
                 </div>
                 <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  1. Contexto do Chamado
+                  1. Contexto
                 </h2>
               </div>
 
-              <div className="space-y-4 flex-1">
-                {/* Application */}
+              <div className="space-y-4 flex-1 flex flex-col min-h-0">
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Aplicação
@@ -363,13 +421,12 @@ export default function TaxonomyForm() {
                   </select>
                 </div>
 
-                {/* Modules */}
                 <div className="flex-1 flex flex-col min-h-0">
                   <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Módulo
                     {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
                   </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
                     {filteredModules.length > 0 ? (
                       filteredModules.map(m => (
                         <button
@@ -395,91 +452,23 @@ export default function TaxonomyForm() {
               </div>
             </div>
 
-            {/* Section 2: Problema e Resolução */}
+            {/* Tags & Categorias */}
             <div className="section-card flex flex-col">
               <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                  <Wrench size={16} style={{ color: 'var(--accent-secondary)' }} />
+                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
+                  <Tag size={16} style={{ color: 'var(--accent-tertiary)' }} />
                 </div>
                 <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  2. Problema e Resolução
+                  2. Classificação (Tags)
                 </h2>
               </div>
 
               <div className="space-y-4 flex-1 flex flex-col min-h-0">
-                {/* Incidents */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Incidente Relatado
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] pr-1 pb-1">
-                    {filteredIncidents.length > 0 ? (
-                      filteredIncidents.map(i => (
-                        <button
-                          key={i._id}
-                          onClick={() => handleIncidentClick(i._id)}
-                          className={`chip text-xs px-2.5 py-1 ${selectedIncident === i._id ? 'active' : ''}`}
-                          style={
-                            selectedIncident !== i._id && highlightedIncidentIds.has(i._id)
-                              ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
-                              : {}
-                          }
-                        >
-                          {i.name}
-                        </button>
-                      ))
-                    ) : (
-                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Ação Tomada
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] pr-1 pb-1">
-                    {filteredActions.length > 0 ? (
-                      filteredActions.map(a => (
-                        <button
-                          key={a._id}
-                          onClick={() => handleActionClick(a._id)}
-                          className={`chip text-xs px-2.5 py-1 ${selectedAction === a._id ? 'active' : ''}`}
-                        >
-                          {a.name}
-                        </button>
-                      ))
-                    ) : (
-                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Section 3: Tags & Notes */}
-          <div className="section-card">
-            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-              <div className="p-1.5 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
-                <Tag size={16} style={{ color: 'var(--accent-tertiary)' }} />
-              </div>
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                3. Classificação e Notas
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              {/* Category Tabs & Tags in a row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col min-h-0">
                   <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Categorias
-                    <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(selecione múltiplas)</span>
                   </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[80px] pr-1 pb-1">
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[60px] pr-1 pb-1">
                     {tagCategories.map(cat => (
                       <button
                         key={cat._id}
@@ -492,7 +481,7 @@ export default function TaxonomyForm() {
                   </div>
                 </div>
 
-                <div className="flex flex-col min-h-0">
+                <div className="flex-1 flex flex-col min-h-0">
                   <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Tags
                     {selectedTags.length > 0 && (
@@ -501,7 +490,7 @@ export default function TaxonomyForm() {
                       </span>
                     )}
                   </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[80px] pr-1 pb-1 min-h-[28px]">
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1 min-h-[28px]">
                     {visibleTags.length > 0 ? (
                       visibleTags.map(tag => (
                         <button
@@ -514,91 +503,99 @@ export default function TaxonomyForm() {
                       ))
                     ) : (
                       <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
-                        {activeCategories.length === 0 ? 'Filtre por categoria ao lado.' : 'Vazio.'}
+                        {activeCategories.length === 0 ? 'Filtre por categoria acima.' : 'Vazio.'}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Motivo & Análise */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Motivo</label>
-                  <textarea
-                    value={motivo}
-                    onChange={(e) => setMotivo(e.target.value)}
-                    placeholder="Ex: Utilizador bloqueado no AD..."
-                    className="form-input resize-none h-16 text-sm"
-                  />
+          </div>
+
+          {/* MIDDLE: Incidents & Actions (Full Width) */}
+          <div className="section-card flex flex-col">
+            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+              <div className="p-1.5 rounded-lg" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                <Wrench size={16} style={{ color: 'var(--accent-secondary)' }} />
+              </div>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                3. Problema e Resolução (Selecione a ação e o incidente)
+              </h2>
+            </div>
+
+            <div className="space-y-4 flex-1 flex flex-col min-h-0">
+              {/* Incidents */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  Incidente Relatado
+                </label>
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
+                  {filteredIncidents.length > 0 ? (
+                    filteredIncidents.map(i => (
+                      <button
+                        key={i._id}
+                        onClick={() => handleIncidentClick(i._id)}
+                        className={`chip text-xs px-2.5 py-1 ${selectedIncident === i._id ? 'active' : ''}`}
+                        style={
+                          selectedIncident !== i._id && highlightedIncidentIds.has(i._id)
+                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                            : {}
+                        }
+                      >
+                        {i.name}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Análise</label>
-                  <textarea
-                    value={analise}
-                    onChange={(e) => setAnalise(e.target.value)}
-                    placeholder="Ex: Acedido ao AD, verificado bloqueio..."
-                    className="form-input resize-none h-16 text-sm"
-                  />
+              </div>
+
+              {/* Actions */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  Ação Tomada
+                </label>
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
+                  {filteredActions.length > 0 ? (
+                    filteredActions.map(a => (
+                      <button
+                        key={a._id}
+                        onClick={() => handleActionClick(a._id)}
+                        className={`chip text-xs px-2.5 py-1 ${selectedAction === a._id ? 'active' : ''}`}
+                      >
+                        {a.name}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* RIGHT: Output Panels */}
-        <div className="w-full lg:w-1/3">
-          <div className="sticky top-20 space-y-6">
-            {/* Short Description */}
-            <div className="output-panel">
-              <div className="output-panel-header">
-                <div className="flex items-center gap-2">
-                  <FileText size={14} style={{ color: 'var(--accent-primary)' }} />
-                  <span className="text-xs font-semibold" style={{ color: '#94a3b8' }}>Short Description</span>
-                </div>
-                <button
-                  onClick={() => handleCopy(shortDescription, 'short')}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
-                  style={{
-                    color: copiedStates.short ? '#22c55e' : 'var(--accent-primary)',
-                    background: copiedStates.short ? 'rgba(34, 197, 94, 0.1)' : 'rgba(99, 102, 241, 0.1)',
-                  }}
-                >
-                  {copiedStates.short ? <Check size={12} /> : <Clipboard size={12} />}
-                  {copiedStates.short ? 'Copiado!' : 'Copiar'}
-                </button>
+          {/* BOTTOM: Motivo e Análise */}
+          <div className="section-card">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Motivo</label>
+                <textarea
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  placeholder="Ex: Utilizador bloqueado no AD..."
+                  className="form-input resize-none h-16 text-sm"
+                />
               </div>
-              <div className="p-5">
-                <p className="font-mono text-sm break-words"
-                  style={{ color: shortDescription ? '#f8fafc' : '#64748b', fontStyle: shortDescription ? 'normal' : 'italic' }}>
-                  {shortDescription || "Os dados gerados aparecerão aqui..."}
-                </p>
-              </div>
-            </div>
-
-            {/* Resolution Notes */}
-            <div className="output-panel">
-              <div className="output-panel-header">
-                <div className="flex items-center gap-2">
-                  <AlertCircle size={14} style={{ color: 'var(--accent-secondary)' }} />
-                  <span className="text-xs font-semibold" style={{ color: '#94a3b8' }}>Resolution Notes</span>
-                </div>
-                <button
-                  onClick={() => handleCopy(resolutionNotes, 'resolution')}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
-                  style={{
-                    color: copiedStates.resolution ? '#22c55e' : 'var(--accent-secondary)',
-                    background: copiedStates.resolution ? 'rgba(34, 197, 94, 0.1)' : 'rgba(139, 92, 246, 0.1)',
-                  }}
-                >
-                  {copiedStates.resolution ? <Check size={12} /> : <Clipboard size={12} />}
-                  {copiedStates.resolution ? 'Copiado!' : 'Copiar'}
-                </button>
-              </div>
-              <div className="p-5">
-                <pre className="font-mono text-sm whitespace-pre-wrap break-words" style={{ color: '#f8fafc' }}>
-                  {resolutionNotes}
-                </pre>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Análise</label>
+                <textarea
+                  value={analise}
+                  onChange={(e) => setAnalise(e.target.value)}
+                  placeholder="Ex: Acedido ao AD, verificado bloqueio..."
+                  className="form-input resize-none h-16 text-sm"
+                />
               </div>
             </div>
           </div>
