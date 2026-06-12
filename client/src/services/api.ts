@@ -48,7 +48,9 @@ export const tagApi = {
   update: (id: string, data: Partial<Tag>) => api.put<Tag>(`/tags/${id}`, data),
   delete: (id: string) => api.delete(`/tags/${id}`),
   getCategories: () => api.get<TagCategory[]>('/tags/categories'),
-  createCategory: (data: Partial<TagCategory>) => api.post<TagCategory>('/tags/categories', data)
+  createCategory: (data: Partial<TagCategory>) => api.post<TagCategory>('/tags/categories', data),
+  updateCategory: (id: string, data: Partial<TagCategory>) => api.put<TagCategory>(`/tags/categories/${id}`, data),
+  deleteCategory: (id: string) => api.delete(`/tags/categories/${id}`)
 };
 
 export const importApi = {

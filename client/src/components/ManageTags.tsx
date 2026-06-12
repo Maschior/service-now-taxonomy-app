@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { tagApi, handleApiError } from '../services/api';
 import { Tag, TagCategory } from '../types/index';
-import { Trash2, Plus, Edit2, X, Tags } from 'lucide-react';
+import { Trash2, Plus, X, Tags } from 'lucide-react';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
@@ -11,7 +11,6 @@ export default function ManageTags() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Tag state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', categoryId: '' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,6 +18,7 @@ export default function ManageTags() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Category state
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState('');
 
   useEffect(() => {
@@ -47,8 +47,13 @@ export default function ManageTags() {
     if (!categoryName.trim()) return;
 
     try {
-      await tagApi.createCategory({ name: categoryName });
+      if (editingCategoryId) {
+        await tagApi.updateCategory(editingCategoryId, { name: categoryName });
+      } else {
+        await tagApi.createCategory({ name: categoryName });
+      }
       setCategoryName('');
+      setEditingCategoryId(null);
       fetchData();
     } catch (err) {
       setError(handleApiError(err));
@@ -73,25 +78,7 @@ export default function ManageTags() {
     }
   };
 
-  const handleEdit = (tag: Tag) => {
-    setFormData({
-      name: tag.name,
-      categoryId: getId(tag.categoryId)
-    });
-    setEditingId(tag._id);
-  };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure?')) {
-      try {
-        await tagApi.delete(id);
-        setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
-        fetchData();
-      } catch (err) {
-        setError(handleApiError(err));
-      }
-    }
-  };
 
   const filteredItems = tags.filter(tag => {
     const matchesName = tag.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -146,7 +133,28 @@ export default function ManageTags() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="section-card p-6 h-fit">
-          <h2 className="text-xl font-semibold mb-4">Add Category</h2>
+          <h2 className="text-xl font-semibold mb-4">Manage Categories</h2>
+          <div className="mb-4">
+            <select
+              value={editingCategoryId || ''}
+              onChange={(e) => {
+                const id = e.target.value;
+                setEditingCategoryId(id || null);
+                if (id) {
+                  const cat = categories.find(c => c._id === id);
+                  setCategoryName(cat ? cat.name : '');
+                } else {
+                  setCategoryName('');
+                }
+              }}
+              className="form-input"
+            >
+              <option value="">-- Create New Category --</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
           <form onSubmit={handleCategorySubmit} className="space-y-4">
             <input
               type="text"
@@ -155,9 +163,31 @@ export default function ManageTags() {
               onChange={(e) => setCategoryName(e.target.value)}
               className="form-input"
             />
-            <button type="submit" className="btn-primary flex items-center gap-2">
-              <Plus size={18} /> Add Category
-            </button>
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary flex items-center gap-2">
+                <Plus size={18} /> {editingCategoryId ? 'Update' : 'Add'}
+              </button>
+              {editingCategoryId && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (window.confirm('Delete this category and ALL its tags? This cannot be undone.')) {
+                      try {
+                        await tagApi.deleteCategory(editingCategoryId);
+                        setEditingCategoryId(null);
+                        setCategoryName('');
+                        fetchData();
+                      } catch (err) {
+                        setError(handleApiError(err));
+                      }
+                    }
+                  }}
+                  className="btn-primary" style={{ background: '#ef4444', border: 'none' }}
+                >
+                  <Trash2 size={18} /> Delete
+                </button>
+              )}
+            </div>
           </form>
         </div>
 
@@ -245,7 +275,6 @@ export default function ManageTags() {
                   </th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Category</th>
-                  <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -260,20 +289,6 @@ export default function ManageTags() {
                     </td>
                     <td className="p-4 font-mono">{tag.name}</td>
                     <td className="p-4 opacity-70">{getCategoryName(tag.categoryId)}</td>
-                    <td className="p-4 text-right space-x-2">
-                      <button
-                        onClick={() => handleEdit(tag)}
-                        className="btn-ghost inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Edit2 size={16} /> Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(tag._id)}
-                        className="text-red-400 hover:text-red-300 inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Trash2 size={16} /> Delete
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>

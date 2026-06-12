@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { incidentApi, moduleApi, applicationApi, handleApiError } from '../services/api';
 import { Incident, Module, Application } from '../types/index';
-import { Trash2, Plus, Edit2, X, AlertTriangle } from 'lucide-react';
+import { Plus, X, AlertTriangle } from 'lucide-react';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
@@ -64,25 +64,7 @@ export default function ManageIncidents() {
     }
   };
 
-  const handleEdit = (inc: Incident) => {
-    setFormData({
-      name: inc.name,
-      moduleId: inc.moduleIds?.length ? getId(inc.moduleIds[0]) : ''
-    });
-    setEditingId(inc._id);
-  };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure?')) {
-      try {
-        await incidentApi.delete(id);
-        setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
-        fetchData();
-      } catch (err) {
-        setError(handleApiError(err));
-      }
-    }
-  };
 
   const filteredItems = incidents.filter(inc => {
     const matchesName = inc.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -245,7 +227,6 @@ export default function ManageIncidents() {
                   </th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Module</th>
-                  <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -261,20 +242,6 @@ export default function ManageIncidents() {
                     <td className="p-4">{inc.name}</td>
                     <td className="p-4 opacity-70">
                       {inc.moduleIds?.length ? getModuleName(inc.moduleIds[0]) : 'None'}
-                    </td>
-                    <td className="p-4 text-right space-x-2">
-                      <button
-                        onClick={() => handleEdit(inc)}
-                        className="btn-ghost inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Edit2 size={16} /> Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(inc._id)}
-                        className="text-red-400 hover:text-red-300 inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Trash2 size={16} /> Delete
-                      </button>
                     </td>
                   </tr>
                 ))}

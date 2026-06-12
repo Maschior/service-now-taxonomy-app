@@ -27,6 +27,27 @@ router.post('/categories', [body('name').trim().notEmpty()], validateRequest, as
   }
 });
 
+router.put('/categories/:id', idValidation, [body('name').trim().notEmpty()], validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const category = await TagCategory.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!category) throw new ApiError(404, 'Category not found');
+    res.json(category);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/categories/:id', idValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await Tag.deleteMany({ categoryId: req.params.id });
+    const category = await TagCategory.findByIdAndDelete(req.params.id);
+    if (!category) throw new ApiError(404, 'Category not found');
+    res.json({ message: 'Category deleted' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Tag routes
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {

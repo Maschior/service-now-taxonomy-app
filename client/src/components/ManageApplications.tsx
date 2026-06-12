@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { applicationApi, handleApiError } from '../services/api';
 import { Application } from '../types/index';
-import { Trash2, Plus, Edit2, X, Package } from 'lucide-react';
+import { Plus, X, Package } from 'lucide-react';
 
 export default function ManageApplications() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -47,22 +47,7 @@ export default function ManageApplications() {
     }
   };
 
-  const handleEdit = (app: Application) => {
-    setFormData({ name: app.name, description: app.description || '' });
-    setEditingId(app._id);
-  };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure?')) {
-      try {
-        await applicationApi.delete(id);
-        setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
-        fetchApplications();
-      } catch (err) {
-        setError(handleApiError(err));
-      }
-    }
-  };
 
   const filteredItems = applications.filter(app => app.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -176,7 +161,6 @@ export default function ManageApplications() {
                   </th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Description</th>
-                  <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,20 +175,6 @@ export default function ManageApplications() {
                     </td>
                     <td className="p-4">{app.name}</td>
                     <td className="p-4 opacity-70">{app.description || '-'}</td>
-                    <td className="p-4 text-right space-x-2">
-                      <button
-                        onClick={() => handleEdit(app)}
-                        className="btn-ghost inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Edit2 size={16} /> Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(app._id)}
-                        className="text-red-400 hover:text-red-300 inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Trash2 size={16} /> Delete
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>

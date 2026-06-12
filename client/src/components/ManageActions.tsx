@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { actionApi, incidentApi, handleApiError } from '../services/api';
 import { Action, Incident } from '../types/index';
-import { Trash2, Plus, Edit2, X, Activity } from 'lucide-react';
+import { Plus, X, Activity } from 'lucide-react';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
@@ -60,25 +60,7 @@ export default function ManageActions() {
     }
   };
 
-  const handleEdit = (act: Action) => {
-    setFormData({
-      name: act.name,
-      incidentId: act.incidentIds?.length ? getId(act.incidentIds[0]) : ''
-    });
-    setEditingId(act._id);
-  };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure?')) {
-      try {
-        await actionApi.delete(id);
-        setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
-        fetchData();
-      } catch (err) {
-        setError(handleApiError(err));
-      }
-    }
-  };
 
   const filteredItems = actions.filter(act => {
     const matchesName = act.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -214,7 +196,6 @@ export default function ManageActions() {
                   </th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Incident</th>
-                  <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,20 +211,6 @@ export default function ManageActions() {
                     <td className="p-4">{act.name}</td>
                     <td className="p-4 opacity-70">
                       {act.incidentIds?.length ? getIncidentName(act.incidentIds[0]) : 'None'}
-                    </td>
-                    <td className="p-4 text-right space-x-2">
-                      <button
-                        onClick={() => handleEdit(act)}
-                        className="btn-ghost inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Edit2 size={16} /> Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(act._id)}
-                        className="text-red-400 hover:text-red-300 inline-flex items-center gap-1 px-3 py-1"
-                      >
-                        <Trash2 size={16} /> Delete
-                      </button>
                     </td>
                   </tr>
                 ))}
