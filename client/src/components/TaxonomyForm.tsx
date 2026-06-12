@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, FileText, Sparkles, Save, Search } from 'lucide-react';
+import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search } from 'lucide-react';
 import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, closureApi, handleApiError } from '../services/api';
 import { Application, Module, Incident, Action, Tag as TagType, TagCategory } from '../types/index';
 import { useDebounce } from '../hooks/useDebounce';
@@ -513,8 +513,9 @@ export default function TaxonomyForm() {
   return (
     <div className="animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-5">
+        {/* Title (Aligned with Left Column) */}
+        <div className="lg:w-1/4 xl:w-1/5 flex-shrink-0">
           <h1 className="text-xl md:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Taxonomia de Chamados
           </h1>
@@ -522,24 +523,53 @@ export default function TaxonomyForm() {
             Monte a short description e resolution notes
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRegisterClosure}
-            disabled={savingClosure || isFormIncomplete}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
-            style={{
-              color: closureSaved ? 'var(--success-color)' : 'var(--accent-primary)',
-              background: closureSaved ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
-              opacity: (savingClosure || isFormIncomplete) && !closureSaved ? 0.4 : 1,
-              cursor: savingClosure ? 'wait' : isFormIncomplete ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {closureSaved ? <Check size={14} /> : <Save size={14} />}
-            {closureSaved ? 'Registrado!' : savingClosure ? 'Salvando...' : 'Registrar Fechamento'}
-          </button>
-          <button onClick={handleClearAll} className="btn-ghost text-xs px-3 py-1">
-            Limpar Tudo
-          </button>
+
+        {/* Short Description (Middle) + Action Buttons (Right) */}
+        <div className="flex-1 flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          {/* Short Description Bar */}
+          <div className="flex-1 flex items-center gap-3 px-3.5 py-2 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', minWidth: 0 }}>
+            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+              Short Description:
+            </span>
+            <span className="font-mono text-xs font-semibold truncate flex-1" style={{ color: shortDescription ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+              {shortDescription || "Aguardando seleções..."}
+            </span>
+            <button
+              onClick={() => handleCopy(shortDescription, 'short')}
+              disabled={!shortDescription}
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-all duration-200"
+              style={{
+                color: !shortDescription ? 'var(--text-muted)' : copiedStates.short ? 'var(--success-color)' : 'var(--accent-primary)',
+                background: !shortDescription ? 'transparent' : copiedStates.short ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
+                opacity: !shortDescription ? 0.5 : 1,
+                cursor: !shortDescription ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {copiedStates.short ? <Check size={12} /> : <Clipboard size={12} />}
+              <span>{copiedStates.short ? 'Copiado!' : 'Copiar'}</span>
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={handleRegisterClosure}
+              disabled={savingClosure || isFormIncomplete}
+              className="flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-lg transition-all duration-200"
+              style={{
+                color: closureSaved ? 'var(--success-color)' : 'var(--accent-primary)',
+                background: closureSaved ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
+                opacity: (savingClosure || isFormIncomplete) && !closureSaved ? 0.4 : 1,
+                cursor: savingClosure ? 'wait' : isFormIncomplete ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {closureSaved ? <Check size={14} /> : <Save size={14} />}
+              <span>{closureSaved ? 'Registrado!' : savingClosure ? 'Salvando...' : 'Registrar Fechamento'}</span>
+            </button>
+            <button onClick={handleClearAll} className="btn-ghost text-xs px-3.5 py-2">
+              Limpar Tudo
+            </button>
+          </div>
         </div>
       </div>
 
@@ -551,38 +581,11 @@ export default function TaxonomyForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
         
         {/* LEFT LATERAL: Output Panels + Tags */}
-        <div className="w-full lg:col-span-4 order-2 lg:order-1">
+        <div className="w-full lg:col-span-1 order-2 lg:order-1">
           <div className="sticky top-20 space-y-4">
-            {/* Short Description */}
-            <div className="output-panel">
-              <div className="output-panel-header">
-                <div className="flex items-center gap-2">
-                  <FileText size={14} style={{ color: 'var(--accent-primary)' }} />
-                  <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Short Description</span>
-                </div>
-                <button
-                  onClick={() => handleCopy(shortDescription, 'short')}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
-                  style={{
-                    color: copiedStates.short ? 'var(--success-color)' : 'var(--accent-primary)',
-                    background: copiedStates.short ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
-                  }}
-                >
-                  {copiedStates.short ? <Check size={12} /> : <Clipboard size={12} />}
-                  {copiedStates.short ? 'Copiado!' : 'Copiar'}
-                </button>
-              </div>
-              <div className="p-5">
-                <p
-                  className="font-mono text-sm whitespace-pre-wrap break-words"
-                  style={{ color: shortDescription ? 'var(--text-primary)' : 'var(--text-muted)', fontStyle: shortDescription ? 'normal' : 'italic' }}>
-                  {shortDescription || "Aguardando seleções completas..."}
-                </p>
-              </div>
-            </div>
 
             {/* Resolution Notes */}
             <div className="output-panel">
@@ -672,7 +675,7 @@ export default function TaxonomyForm() {
         </div>
 
         {/* RIGHT/CENTER: Form */}
-        <div className="w-full lg:col-span-8 flex flex-col gap-4 stagger-children order-1 lg:order-2">
+        <div className="w-full lg:col-span-3 xl:col-span-4 flex flex-col gap-4 stagger-children order-1 lg:order-2">
           
           {/* Contexto (Application chips + Module chips) - Full Width */}
           <div className="section-card flex flex-col">
