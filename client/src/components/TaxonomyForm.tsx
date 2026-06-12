@@ -515,15 +515,7 @@ export default function TaxonomyForm() {
       {/* Header */}
       
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-5">
-        {/* Title (Aligned with Left Column) */}
-        <div className="lg:w-1/4 xl:w-1/5 flex-shrink-0">
-          {/* <h1 className="text-xl md:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Taxonomia de Chamados
-          </h1>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-            Monte a short description e resolution notes
-          </p> */}
-        </div>
+       
 
         {/* Short Description (Middle) + Action Buttons (Right) */}
         <div className="flex-1 flex flex-col md:flex-row items-stretch md:items-center gap-3">
