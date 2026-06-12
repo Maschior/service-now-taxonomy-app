@@ -1,29 +1,78 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, FileText, Sparkles } from 'lucide-react';
-import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, handleApiError } from '../services/api';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, FileText, Sparkles, Save } from 'lucide-react';
+import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, closureApi, handleApiError } from '../services/api';
 import { Application, Module, Incident, Action, Tag as TagType, TagCategory } from '../types/index';
+
+const CACHE_KEY = 'taxonomy-form-state';
+
+interface CachedState {
+  selectedApp: string;
+  selectedModule: string;
+  selectedIncident: string;
+  selectedAction: string;
+  activeCategories: string[];
+  selectedTags: string[];
+  motivo: string;
+  analise: string;
+  solucao: string;
+}
+
+const loadCache = (): Partial<CachedState> => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+};
+
+const saveCache = (state: CachedState) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(state));
+  } catch { /* ignore quota errors */ }
+};
+
+const clearCache = () => {
+  try { localStorage.removeItem(CACHE_KEY); } catch {}
+};
 
 /** Utility to extract ID from a potentially populated field */
 const getId = (field: string | { _id: string }): string =>
   typeof field === 'object' && field !== null ? field._id : field;
 
 export default function TaxonomyForm() {
+  // Load cached state on first render
+  const [cached] = useState(() => loadCache());
+
   // Selected IDs
-  const [selectedApp, setSelectedApp] = useState('');
-  const [selectedModule, setSelectedModule] = useState('');
-  const [selectedIncident, setSelectedIncident] = useState('');
-  const [selectedAction, setSelectedAction] = useState('');
+  const [selectedApp, setSelectedApp] = useState(cached.selectedApp || '');
+  const [selectedModule, setSelectedModule] = useState(cached.selectedModule || '');
+  const [selectedIncident, setSelectedIncident] = useState(cached.selectedIncident || '');
+  const [selectedAction, setSelectedAction] = useState(cached.selectedAction || '');
 
   // Tags
-  const [activeCategories, setActiveCategories] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [activeCategories, setActiveCategories] = useState<string[]>(cached.activeCategories || []);
+  const [selectedTags, setSelectedTags] = useState<string[]>(cached.selectedTags || []);
 
   // Text fields
-  const [motivo, setMotivo] = useState('');
-  const [analise, setAnalise] = useState('');
+  const [motivo, setMotivo] = useState(cached.motivo || '');
+  const [analise, setAnalise] = useState(cached.analise || '');
+  const [solucao, setSolucao] = useState(cached.solucao || '');
 
   // Copy states
   const [copiedStates, setCopiedStates] = useState({ short: false, resolution: false });
+
+  // Closure registration feedback
+  const [savingClosure, setSavingClosure] = useState(false);
+  const [closureSaved, setClosureSaved] = useState(false);
+
+  // ──────────────────── CACHE SYNC ────────────────────
+
+  useEffect(() => {
+    saveCache({
+      selectedApp, selectedModule, selectedIncident, selectedAction,
+      activeCategories, selectedTags,
+      motivo, analise, solucao
+    });
+  }, [selectedApp, selectedModule, selectedIncident, selectedAction, activeCategories, selectedTags, motivo, analise, solucao]);
 
   // Data from API
   const [applications, setApplications] = useState<Application[]>([]);
@@ -74,6 +123,25 @@ export default function TaxonomyForm() {
     if (!selectedApp) return allModules;
     return allModules.filter(m => getId(m.applicationId) === selectedApp);
   }, [allModules, selectedApp]);
+
+  /** Unique module names from filteredModules (Group By name for display) */
+  const uniqueFilteredModuleNames = useMemo(() => {
+    const seen = new Set<string>();
+    return filteredModules
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .filter(m => {
+        if (seen.has(m.name)) return false;
+        seen.add(m.name);
+        return true;
+      })
+      .map(m => m.name);
+  }, [filteredModules]);
+
+  /** The name of the currently selected module (derived from selectedModule ID) */
+  const selectedModuleName = useMemo(() => {
+    if (!selectedModule) return '';
+    return allModules.find(m => m._id === selectedModule)?.name || '';
+  }, [selectedModule, allModules]);
 
   /** Incidents filtered by selected Module (and indirectly by App) */
   const filteredIncidents = useMemo(() => {
@@ -132,6 +200,24 @@ export default function TaxonomyForm() {
     if (!incident) return new Set<string>();
     return new Set(incident.moduleIds.map(mid => getId(mid)));
   }, [selectedIncident, allIncidents]);
+
+  /** Highlighted module names (derived from highlightedModuleIds for grouped display) */
+  const highlightedModuleNames = useMemo(() => {
+    if (highlightedModuleIds.size === 0) return new Set<string>();
+    return new Set(
+      allModules.filter(m => highlightedModuleIds.has(m._id)).map(m => m.name)
+    );
+  }, [highlightedModuleIds, allModules]);
+
+  /** When a module name is selected, highlight which apps own a module with that name */
+  const highlightedAppIds = useMemo(() => {
+    if (!selectedModuleName) return new Set<string>();
+    return new Set(
+      allModules
+        .filter(m => m.name === selectedModuleName)
+        .map(m => getId(m.applicationId))
+    );
+  }, [selectedModuleName, allModules]);
 
   // ──────────────────── SELECTION HANDLERS ────────────────────
 
@@ -213,13 +299,52 @@ export default function TaxonomyForm() {
     setSelectedAction(finalAct);
   };
 
-  const handleAppChange = (appId: string) => {
-    if (!appId) autoSelectChain('app', '', true);
-    else autoSelectChain('app', appId, false);
+  const handleAppClick = (appId: string) => {
+    if (selectedApp === appId) {
+      // Unselect app
+      autoSelectChain('app', appId, true);
+      return;
+    }
+    // If a module name was selected, re-resolve the module ID for the new app
+    if (selectedModuleName) {
+      const resolvedMod = allModules.find(
+        m => m.name === selectedModuleName && getId(m.applicationId) === appId
+      );
+      if (resolvedMod) {
+        // Set app first, then resolve module under that app
+        setSelectedApp(appId);
+        autoSelectChain('module', resolvedMod._id, false);
+        return;
+      }
+    }
+    autoSelectChain('app', appId, false);
   };
 
-  const handleModuleClick = (moduleId: string) => {
-    autoSelectChain('module', moduleId, selectedModule === moduleId);
+  /** Handle click on a grouped module name chip */
+  const handleModuleNameClick = (moduleName: string) => {
+    // If clicking the already-selected module name, unselect it
+    if (selectedModuleName === moduleName) {
+      autoSelectChain('module', '', true);
+      return;
+    }
+
+    if (selectedApp) {
+      // App is selected: resolve to the specific module for this app
+      const mod = allModules.find(
+        m => m.name === moduleName && getId(m.applicationId) === selectedApp
+      );
+      if (mod) {
+        autoSelectChain('module', mod._id, false);
+      }
+    } else {
+      // No app selected: find all apps that own this module name, pick the first
+      const matchingModules = allModules
+        .filter(m => m.name === moduleName)
+        .sort((a, b) => a.name.localeCompare(b.name));
+      if (matchingModules.length > 0) {
+        autoSelectChain('module', matchingModules[0]._id, false);
+      }
+    }
   };
 
   const handleIncidentClick = (incidentId: string) => {
@@ -268,8 +393,8 @@ export default function TaxonomyForm() {
   );
 
   const resolutionNotes = useMemo(() =>
-    `${selectedTagNames.join('\n')}${selectedTagNames.length > 0 ? '\n\n' : ''}- Motivo: ${motivo}\n- Análise: ${analise}`,
-    [selectedTagNames, motivo, analise]
+    `${selectedTagNames.join('\n')}${selectedTagNames.length > 0 ? '\n\n' : ''}- Motivo: ${motivo}\n- Análise: ${analise}\n- Solução: ${solucao}`,
+    [selectedTagNames, motivo, analise, solucao]
   );
 
   const handleCopy = (text: string, type: 'short' | 'resolution') => {
@@ -279,6 +404,7 @@ export default function TaxonomyForm() {
   };
 
   const handleClearAll = () => {
+    if (!window.confirm('Tem certeza que deseja limpar todos os campos?')) return;
     setSelectedApp('');
     setSelectedModule('');
     setSelectedIncident('');
@@ -287,7 +413,38 @@ export default function TaxonomyForm() {
     setActiveCategories([]);
     setMotivo('');
     setAnalise('');
+    setSolucao('');
+    clearCache();
   };
+
+  const handleRegisterClosure = useCallback(async () => {
+    if (!shortDescription) {
+      setError('Preencha pelo menos a short description antes de registrar.');
+      return;
+    }
+    try {
+      setSavingClosure(true);
+      await closureApi.create({
+        shortDescription,
+        resolutionNotes,
+        applicationId: selectedApp || undefined,
+        moduleId: selectedModule || undefined,
+        incidentId: selectedIncident || undefined,
+        actionId: selectedAction || undefined,
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        motivo: motivo || undefined,
+        analise: analise || undefined,
+        solucao: solucao || undefined,
+      });
+      setClosureSaved(true);
+      setTimeout(() => setClosureSaved(false), 3000);
+      setError(null);
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setSavingClosure(false);
+    }
+  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao]);
 
   // ──────────────────── RENDER ────────────────────
 
@@ -314,9 +471,25 @@ export default function TaxonomyForm() {
             Monte a short description e resolution notes
           </p>
         </div>
-        <button onClick={handleClearAll} className="btn-ghost text-xs px-3 py-1">
-          Limpar Tudo
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRegisterClosure}
+            disabled={savingClosure}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
+            style={{
+              color: closureSaved ? 'var(--success-color)' : 'var(--accent-primary)',
+              background: closureSaved ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
+              opacity: savingClosure ? 0.6 : 1,
+              cursor: savingClosure ? 'wait' : 'pointer',
+            }}
+          >
+            {closureSaved ? <Check size={14} /> : <Save size={14} />}
+            {closureSaved ? 'Registrado!' : savingClosure ? 'Salvando...' : 'Registrar Fechamento'}
+          </button>
+          <button onClick={handleClearAll} className="btn-ghost text-xs px-3 py-1">
+            Limpar Tudo
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -329,7 +502,7 @@ export default function TaxonomyForm() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
         
-        {/* LEFT LATERAL: Output Panels */}
+        {/* LEFT LATERAL: Output Panels + Tags */}
         <div className="w-full lg:col-span-1 order-2 lg:order-1">
           <div className="sticky top-20 space-y-4">
             {/* Short Description */}
@@ -385,81 +558,15 @@ export default function TaxonomyForm() {
                 </pre>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* RIGHT/CENTER: Form */}
-        <div className="w-full lg:col-span-3 xl:col-span-4 flex flex-col gap-4 stagger-children order-1 lg:order-2">
-          {/* TOP ROW: Contexto & Tags (Lado a Lado) */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            
-            {/* Contexto */}
-            <div className="section-card flex flex-col">
-              <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
-                  <LayoutTemplate size={16} style={{ color: 'var(--accent-primary)' }} />
-                </div>
-                <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  1. Contexto
-                </h2>
-              </div>
-
-              <div className="space-y-4 flex-1 flex flex-col min-h-0">
-                <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Aplicação
-                  </label>
-                  <select
-                    value={selectedApp}
-                    onChange={(e) => handleAppChange(e.target.value)}
-                    className="form-input w-full"
-                  >
-                    <option value="">Selecione uma aplicação...</option>
-                    {applications.map(a => (
-                      <option key={a._id} value={a._id}>{a.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex-1 flex flex-col min-h-0">
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Módulo
-                    {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
-                    {filteredModules.length > 0 ? (
-                      filteredModules.map(m => (
-                        <button
-                          key={m._id}
-                          onClick={() => handleModuleClick(m._id)}
-                          className={`chip text-xs px-2.5 py-1 ${selectedModule === m._id ? 'active' : ''}`}
-                          style={
-                            selectedModule !== m._id && highlightedModuleIds.has(m._id)
-                              ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
-                              : {}
-                          }
-                        >
-                          {m.name}
-                        </button>
-                      ))
-                    ) : (
-                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
-                        {selectedApp ? 'Nenhum módulo encontrado.' : 'Aguardando seleção...'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Tags & Categorias */}
+            {/* Tags & Categorias (moved here from main column) */}
             <div className="section-card flex flex-col">
               <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
                 <div className="p-1.5 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
                   <Tag size={16} style={{ color: 'var(--accent-tertiary)' }} />
                 </div>
                 <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  2. Classificação (Tags)
+                  Classificação (Tags)
                 </h2>
               </div>
 
@@ -490,7 +597,7 @@ export default function TaxonomyForm() {
                       </span>
                     )}
                   </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1 min-h-[28px]">
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] pr-1 pb-1 min-h-[28px]">
                     {visibleTags.length > 0 ? (
                       visibleTags.map(tag => (
                         <button
@@ -510,7 +617,83 @@ export default function TaxonomyForm() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
+        {/* RIGHT/CENTER: Form */}
+        <div className="w-full lg:col-span-3 xl:col-span-4 flex flex-col gap-4 stagger-children order-1 lg:order-2">
+          
+          {/* Contexto (Application chips + Module chips) - Full Width */}
+          <div className="section-card flex flex-col">
+            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+              <div className="p-1.5 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
+                <LayoutTemplate size={16} style={{ color: 'var(--accent-primary)' }} />
+              </div>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                1. Contexto
+              </h2>
+            </div>
+
+            <div className="space-y-4 flex-1 flex flex-col min-h-0">
+              {/* Application Chips */}
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  Aplicação
+                </label>
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
+                  {applications.length > 0 ? (
+                    applications.map(a => (
+                      <button
+                        key={a._id}
+                        onClick={() => handleAppClick(a._id)}
+                        className={`chip text-xs px-2.5 py-1 ${selectedApp === a._id ? 'active' : ''}`}
+                        style={
+                          selectedApp !== a._id && highlightedAppIds.has(a._id)
+                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                            : {}
+                        }
+                      >
+                        {a.name}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                      Nenhuma aplicação encontrada.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Module Chips (Grouped by Name) */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  Módulo
+                  {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
+                </label>
+                <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
+                  {uniqueFilteredModuleNames.length > 0 ? (
+                    uniqueFilteredModuleNames.map(name => (
+                      <button
+                        key={name}
+                        onClick={() => handleModuleNameClick(name)}
+                        className={`chip text-xs px-2.5 py-1 ${selectedModuleName === name ? 'active' : ''}`}
+                        style={
+                          selectedModuleName !== name && highlightedModuleNames.has(name)
+                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                            : {}
+                        }
+                      >
+                        {name}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                      {selectedApp ? 'Nenhum módulo encontrado.' : 'Aguardando seleção...'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* MIDDLE: Incidents & Actions (Full Width) */}
@@ -520,7 +703,7 @@ export default function TaxonomyForm() {
                 <Wrench size={16} style={{ color: 'var(--accent-secondary)' }} />
               </div>
               <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                3. Problema e Resolução (Selecione a ação e o incidente)
+                2. Problema e Resolução (Selecione a ação e o incidente)
               </h2>
             </div>
 
@@ -576,9 +759,9 @@ export default function TaxonomyForm() {
             </div>
           </div>
 
-          {/* BOTTOM: Motivo e Análise */}
+          {/* BOTTOM: Motivo, Análise & Solução */}
           <div className="section-card">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Motivo</label>
                 <textarea
@@ -594,6 +777,15 @@ export default function TaxonomyForm() {
                   value={analise}
                   onChange={(e) => setAnalise(e.target.value)}
                   placeholder="Ex: Acedido ao AD, verificado bloqueio..."
+                  className="form-input resize-none h-16 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Solução</label>
+                <textarea
+                  value={solucao}
+                  onChange={(e) => setSolucao(e.target.value)}
+                  placeholder="Ex: Desbloqueado a conta no AD..."
                   className="form-input resize-none h-16 text-sm"
                 />
               </div>
