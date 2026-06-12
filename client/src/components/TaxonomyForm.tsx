@@ -462,12 +462,11 @@ export default function TaxonomyForm() {
       !selectedModule ||
       !selectedIncident ||
       !selectedAction ||
-      selectedTags.length === 0 ||
       !motivo.trim() ||
       !analise.trim() ||
       !solucao.trim()
     );
-  }, [selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao]);
+  }, [selectedApp, selectedModule, selectedIncident, selectedAction, motivo, analise, solucao]);
 
   const handleRegisterClosure = useCallback(async () => {
     if (isFormIncomplete) {
