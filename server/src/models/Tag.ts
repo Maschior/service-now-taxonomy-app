@@ -16,6 +16,6 @@ const tagSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-tagSchema.index({ name: 1, categoryId: 1 }, { unique: true });
+tagSchema.index({ name: 1, categoryId: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 export const Tag = mongoose.model('Tag', tagSchema);

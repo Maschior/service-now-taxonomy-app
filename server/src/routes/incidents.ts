@@ -32,8 +32,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
+
 router.post('/', incidentValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Incident.findOne(getCaseInsensitiveQuery(req.body.name));
+    if (existing) throw new ApiError(400, 'Já existe um incidente com este nome.');
+
     const incident = new Incident(req.body);
     await incident.save();
     await incident.populate({ path: 'moduleIds', populate: { path: 'applicationId' } });
@@ -45,6 +50,12 @@ router.post('/', incidentValidation, validateRequest, async (req: Request, res: 
 
 router.put('/:id', idValidation, incidentValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Incident.findOne({
+      ...getCaseInsensitiveQuery(req.body.name),
+      _id: { $ne: req.params.id }
+    });
+    if (existing) throw new ApiError(400, 'Já existe um incidente com este nome.');
+
     const incident = await Incident.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
       .populate({ path: 'moduleIds', populate: { path: 'applicationId' } });
     if (!incident) throw new ApiError(404, 'Incident not found');

@@ -5,7 +5,6 @@ const applicationSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
       trim: true
     },
     description: {
@@ -15,5 +14,7 @@ const applicationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+applicationSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 export const Application = mongoose.model('Application', applicationSchema);

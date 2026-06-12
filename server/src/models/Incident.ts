@@ -16,5 +16,6 @@ const incidentSchema = new Schema<IIncident>(
 );
 
 incidentSchema.index({ name: 1, moduleIds: 1 });
+incidentSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 export const Incident = mongoose.model<IIncident>('Incident', incidentSchema);

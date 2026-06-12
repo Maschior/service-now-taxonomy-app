@@ -16,5 +16,6 @@ const actionSchema = new Schema<IAction>(
 );
 
 actionSchema.index({ name: 1, incidentIds: 1 });
+actionSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 export const Action = mongoose.model<IAction>('Action', actionSchema);

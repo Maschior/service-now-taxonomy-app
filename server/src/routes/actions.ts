@@ -38,8 +38,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
+
 router.post('/', actionValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Action.findOne(getCaseInsensitiveQuery(req.body.name));
+    if (existing) throw new ApiError(400, 'Já existe uma ação com este nome.');
+
     const action = new Action(req.body);
     await action.save();
     await action.populate({ path: 'incidentIds', populate: { path: 'moduleIds', populate: { path: 'applicationId' } } });
@@ -51,6 +56,12 @@ router.post('/', actionValidation, validateRequest, async (req: Request, res: Re
 
 router.put('/:id', idValidation, actionValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Action.findOne({
+      ...getCaseInsensitiveQuery(req.body.name),
+      _id: { $ne: req.params.id }
+    });
+    if (existing) throw new ApiError(400, 'Já existe uma ação com este nome.');
+
     const action = await Action.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
       .populate({ path: 'incidentIds', populate: { path: 'moduleIds', populate: { path: 'applicationId' } } });
     if (!action) throw new ApiError(404, 'Action not found');

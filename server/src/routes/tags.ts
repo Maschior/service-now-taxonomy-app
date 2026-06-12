@@ -17,8 +17,13 @@ router.get('/categories', async (req: Request, res: Response, next: NextFunction
   }
 });
 
+import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
+
 router.post('/categories', [body('name').trim().notEmpty()], validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existingCat = await TagCategory.findOne(getCaseInsensitiveQuery(req.body.name));
+    if (existingCat) throw new ApiError(400, 'Já existe uma categoria com este nome.');
+
     const category = new TagCategory(req.body);
     await category.save();
     res.status(201).json(category);
@@ -29,6 +34,12 @@ router.post('/categories', [body('name').trim().notEmpty()], validateRequest, as
 
 router.put('/categories/:id', idValidation, [body('name').trim().notEmpty()], validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existingCat = await TagCategory.findOne({
+      ...getCaseInsensitiveQuery(req.body.name),
+      _id: { $ne: req.params.id }
+    });
+    if (existingCat) throw new ApiError(400, 'Já existe uma categoria com este nome.');
+
     const category = await TagCategory.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!category) throw new ApiError(404, 'Category not found');
     res.json(category);
@@ -61,6 +72,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
 router.post('/', tagValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existingTag = await Tag.findOne({
+      categoryId: req.body.categoryId,
+      ...getCaseInsensitiveQuery(req.body.name)
+    });
+    if (existingTag) throw new ApiError(400, 'Já existe uma tag com este nome nesta categoria.');
+
     const tag = new Tag(req.body);
     await tag.save();
     await tag.populate('categoryId');
@@ -72,6 +89,13 @@ router.post('/', tagValidation, validateRequest, async (req: Request, res: Respo
 
 router.put('/:id', idValidation, tagValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existingTag = await Tag.findOne({
+      categoryId: req.body.categoryId,
+      ...getCaseInsensitiveQuery(req.body.name),
+      _id: { $ne: req.params.id }
+    });
+    if (existingTag) throw new ApiError(400, 'Já existe uma tag com este nome nesta categoria.');
+
     const tag = await Tag.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('categoryId');
     if (!tag) throw new ApiError(404, 'Tag not found');
     res.json(tag);

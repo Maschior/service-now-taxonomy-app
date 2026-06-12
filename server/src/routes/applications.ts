@@ -14,8 +14,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
+
 router.post('/', appValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Application.findOne(getCaseInsensitiveQuery(req.body.name));
+    if (existing) throw new ApiError(400, 'Já existe uma aplicação com este nome.');
+
     const app = new Application(req.body);
     await app.save();
     res.status(201).json(app);
@@ -26,6 +31,12 @@ router.post('/', appValidation, validateRequest, async (req: Request, res: Respo
 
 router.put('/:id', idValidation, appValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Application.findOne({
+      ...getCaseInsensitiveQuery(req.body.name),
+      _id: { $ne: req.params.id }
+    });
+    if (existing) throw new ApiError(400, 'Já existe uma aplicação com este nome.');
+
     const app = await Application.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!app) throw new ApiError(404, 'Application not found');
     res.json(app);

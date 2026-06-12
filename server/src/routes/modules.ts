@@ -24,8 +24,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
+
 router.post('/', moduleValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Module.findOne({
+      applicationId: req.body.applicationId,
+      ...getCaseInsensitiveQuery(req.body.name)
+    });
+    if (existing) throw new ApiError(400, 'Já existe um módulo com este nome para esta aplicação.');
+
     const module = new Module(req.body);
     await module.save();
     await module.populate('applicationId');
@@ -37,6 +45,13 @@ router.post('/', moduleValidation, validateRequest, async (req: Request, res: Re
 
 router.put('/:id', idValidation, moduleValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await Module.findOne({
+      applicationId: req.body.applicationId,
+      ...getCaseInsensitiveQuery(req.body.name),
+      _id: { $ne: req.params.id }
+    });
+    if (existing) throw new ApiError(400, 'Já existe um módulo com este nome para esta aplicação.');
+
     const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('applicationId');
     if (!module) throw new ApiError(404, 'Module not found');
     res.json(module);

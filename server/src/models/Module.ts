@@ -16,6 +16,6 @@ const moduleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-moduleSchema.index({ name: 1, applicationId: 1 }, { unique: true });
+moduleSchema.index({ name: 1, applicationId: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 export const Module = mongoose.model('Module', moduleSchema);

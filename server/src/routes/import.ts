@@ -4,6 +4,8 @@ import { Module } from '../models/Module.js';
 import { Incident } from '../models/Incident.js';
 import { Action } from '../models/Action.js';
 
+import { getCaseInsensitiveQuery, normalizeName } from '../utils/validationHelper.js';
+
 const router = Router();
 
 router.post('/', async (req, res, next) => {
@@ -44,19 +46,19 @@ router.post('/', async (req, res, next) => {
 
       if (!appName || !moduleName || !incidentName || !actionName) continue;
 
-      let app = await Application.findOne({ name: appName });
+      let app = await Application.findOne(getCaseInsensitiveQuery(appName));
       if (!app) {
-        app = await Application.create({ name: appName });
+        app = await Application.create({ name: normalizeName(appName) });
       }
 
-      let mod = await Module.findOne({ name: moduleName, applicationId: app._id });
+      let mod = await Module.findOne({ applicationId: app._id, ...getCaseInsensitiveQuery(moduleName) });
       if (!mod) {
-        mod = await Module.create({ name: moduleName, applicationId: app._id });
+        mod = await Module.create({ name: normalizeName(moduleName), applicationId: app._id });
       }
 
-      let incident = await Incident.findOne({ name: incidentName });
+      let incident = await Incident.findOne(getCaseInsensitiveQuery(incidentName));
       if (!incident) {
-        incident = await Incident.create({ name: incidentName, moduleIds: [mod._id] });
+        incident = await Incident.create({ name: normalizeName(incidentName), moduleIds: [mod._id] });
       } else {
         if (!incident.moduleIds.includes(mod._id)) {
           incident.moduleIds.push(mod._id);
@@ -64,9 +66,9 @@ router.post('/', async (req, res, next) => {
         }
       }
 
-      let action = await Action.findOne({ name: actionName });
+      let action = await Action.findOne(getCaseInsensitiveQuery(actionName));
       if (!action) {
-        action = await Action.create({ name: actionName, incidentIds: [incident._id] });
+        action = await Action.create({ name: normalizeName(actionName), incidentIds: [incident._id] });
       } else {
         if (!action.incidentIds.includes(incident._id)) {
           action.incidentIds.push(incident._id);
