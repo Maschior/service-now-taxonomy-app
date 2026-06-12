@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, FileText, Sparkles, Save } from 'lucide-react';
+import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, FileText, Sparkles, Save, Search } from 'lucide-react';
 import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, closureApi, handleApiError } from '../services/api';
 import { Application, Module, Incident, Action, Tag as TagType, TagCategory } from '../types/index';
+import { useDebounce } from '../hooks/useDebounce';
 
 const CACHE_KEY = 'taxonomy-form-state';
 
@@ -41,6 +42,19 @@ const getId = (field: string | { _id: string }): string =>
 export default function TaxonomyForm() {
   // Load cached state on first render
   const [cached] = useState(() => loadCache());
+
+  // Search states
+  const [appSearch, setAppSearch] = useState('');
+  const debouncedAppSearch = useDebounce(appSearch, 300);
+
+  const [moduleSearch, setModuleSearch] = useState('');
+  const debouncedModuleSearch = useDebounce(moduleSearch, 300);
+
+  const [incidentSearch, setIncidentSearch] = useState('');
+  const debouncedIncidentSearch = useDebounce(incidentSearch, 300);
+
+  const [actionSearch, setActionSearch] = useState('');
+  const debouncedActionSearch = useDebounce(actionSearch, 300);
 
   // Selected IDs
   const [selectedApp, setSelectedApp] = useState(cached.selectedApp || '');
@@ -182,6 +196,31 @@ export default function TaxonomyForm() {
 
     return allActions;
   }, [allActions, filteredIncidents, selectedIncident, selectedModule, selectedApp]);
+
+  // ──────────────────── SEARCH FILTERING ────────────────────
+  const searchedApplications = useMemo(() => {
+    if (!debouncedAppSearch.trim()) return applications;
+    const lower = debouncedAppSearch.toLowerCase();
+    return applications.filter(a => a.name.toLowerCase().includes(lower));
+  }, [applications, debouncedAppSearch]);
+
+  const searchedModuleNames = useMemo(() => {
+    if (!debouncedModuleSearch.trim()) return uniqueFilteredModuleNames;
+    const lower = debouncedModuleSearch.toLowerCase();
+    return uniqueFilteredModuleNames.filter(name => name.toLowerCase().includes(lower));
+  }, [uniqueFilteredModuleNames, debouncedModuleSearch]);
+
+  const searchedIncidents = useMemo(() => {
+    if (!debouncedIncidentSearch.trim()) return filteredIncidents;
+    const lower = debouncedIncidentSearch.toLowerCase();
+    return filteredIncidents.filter(i => i.name.toLowerCase().includes(lower));
+  }, [filteredIncidents, debouncedIncidentSearch]);
+
+  const searchedActions = useMemo(() => {
+    if (!debouncedActionSearch.trim()) return filteredActions;
+    const lower = debouncedActionSearch.toLowerCase();
+    return filteredActions.filter(a => a.name.toLowerCase().includes(lower));
+  }, [filteredActions, debouncedActionSearch]);
 
   // ──────────────────── REVERSE FILTER (when selecting from bottom up) ────────────────────
 
@@ -650,12 +689,23 @@ export default function TaxonomyForm() {
             <div className="space-y-4 flex-1 flex flex-col min-h-0">
               {/* Application Chips */}
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Aplicação
+                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <span>Aplicação</span>
+                  <div className="relative">
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar..."
+                      value={appSearch}
+                      onChange={e => setAppSearch(e.target.value)}
+                      className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
+                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
-                  {applications.length > 0 ? (
-                    applications.map(a => (
+                  {searchedApplications.length > 0 ? (
+                    searchedApplications.map(a => (
                       <button
                         key={a._id}
                         onClick={() => handleAppClick(a._id)}
@@ -679,13 +729,26 @@ export default function TaxonomyForm() {
 
               {/* Module Chips (Grouped by Name) */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Módulo
-                  {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
+                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <span>
+                    Módulo
+                    {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
+                  </span>
+                  <div className="relative">
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar..."
+                      value={moduleSearch}
+                      onChange={e => setModuleSearch(e.target.value)}
+                      className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
+                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] pr-1 pb-1">
-                  {uniqueFilteredModuleNames.length > 0 ? (
-                    uniqueFilteredModuleNames.map(name => (
+                  {searchedModuleNames.length > 0 ? (
+                    searchedModuleNames.map(name => (
                       <button
                         key={name}
                         onClick={() => handleModuleNameClick(name)}
@@ -723,12 +786,23 @@ export default function TaxonomyForm() {
             <div className="space-y-4 flex-1 flex flex-col min-h-0">
               {/* Incidents */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Incidente Relatado
+                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <span>Incidente Relatado</span>
+                  <div className="relative">
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar..."
+                      value={incidentSearch}
+                      onChange={e => setIncidentSearch(e.target.value)}
+                      className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
+                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
-                  {filteredIncidents.length > 0 ? (
-                    filteredIncidents.map(i => (
+                  {searchedIncidents.length > 0 ? (
+                    searchedIncidents.map(i => (
                       <button
                         key={i._id}
                         onClick={() => handleIncidentClick(i._id)}
@@ -750,12 +824,23 @@ export default function TaxonomyForm() {
 
               {/* Actions */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Ação Tomada
+                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <span>Ação Tomada</span>
+                  <div className="relative">
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar..."
+                      value={actionSearch}
+                      onChange={e => setActionSearch(e.target.value)}
+                      className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
+                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
-                  {filteredActions.length > 0 ? (
-                    filteredActions.map(a => (
+                  {searchedActions.length > 0 ? (
+                    searchedActions.map(a => (
                       <button
                         key={a._id}
                         onClick={() => handleActionClick(a._id)}

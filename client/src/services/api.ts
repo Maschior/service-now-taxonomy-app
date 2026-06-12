@@ -58,7 +58,8 @@ export const importApi = {
 };
 
 export const closureApi = {
-  getAll: (limit?: number) => api.get<Closure[]>('/closures', { params: { limit } }),
+  getAll: (params?: { page?: number; limit?: number; search?: string; shortDescription?: string; tags?: string; startDate?: string; endDate?: string }) => 
+    api.get<{ data: Closure[], pagination: any }>('/closures', { params }),
   create: (data: {
     shortDescription: string;
     resolutionNotes: string;
@@ -70,7 +71,8 @@ export const closureApi = {
     motivo?: string;
     analise?: string;
     solucao?: string;
-  }) => api.post<Closure>('/closures', data)
+  }) => api.post<Closure>('/closures', data),
+  delete: (id: string) => api.delete(`/closures/${id}`)
 };
 
 export const handleApiError = (error: unknown): string => {

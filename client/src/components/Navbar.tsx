@@ -10,6 +10,7 @@ export default function Navbar() {
 
   const mainLinks = [
     { path: '/', label: 'Home' },
+    { path: '/closures', label: 'Fechamentos' },
     { path: '/admin', label: 'Admin' },
   ];
 

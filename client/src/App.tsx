@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import AdminDashboard from './pages/AdminDashboard';
+import ClosuresPage from './pages/ClosuresPage';
 import ManageApplications from './components/ManageApplications';
 import ManageModules from './components/ManageModules';
 import ManageIncidents from './components/ManageIncidents';
@@ -15,6 +16,7 @@ function App() {
       <main className="w-full px-4 md:px-8 py-6">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/closures" element={<ClosuresPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/manage/applications" element={<ManageApplications />} />
           <Route path="/manage/modules" element={<ManageModules />} />
