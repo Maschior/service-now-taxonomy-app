@@ -156,16 +156,14 @@ export default function AdminDashboard() {
                   Importar via CSV (ServiceNow)
                 </h2>
               </div>
-              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-                <div className="flex-1">
-                  <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
-                    Faça o upload de um arquivo `.csv` contendo os dados de <strong>Short Description</strong> extraídos do Service Now. O formato esperado para cada linha é:
-                  </p>
-                  <code className="block p-3 rounded-lg text-xs" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', border: '1px solid var(--border-primary)' }}>
-                    "Application:Module:Local Support:Incident:Action"
-                  </code>
-                </div>
-                <div className="flex-shrink-0">
+              <div className="flex flex-col gap-4">
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Faça o upload de um arquivo `.csv` contendo os dados de <strong>Short Description</strong> extraídos do Service Now. O formato esperado para cada linha é:
+                </p>
+                <code className="block p-3 rounded-lg text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', border: '1px solid var(--border-primary)' }}>
+                  "Application:Module:Local Support:Incident:Action"
+                </code>
+                <div className="flex justify-start">
                   <input
                     type="file"
                     accept=".csv"
