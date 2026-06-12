@@ -417,9 +417,22 @@ export default function TaxonomyForm() {
     clearCache();
   };
 
+  const isFormIncomplete = useMemo(() => {
+    return (
+      !selectedApp ||
+      !selectedModule ||
+      !selectedIncident ||
+      !selectedAction ||
+      selectedTags.length === 0 ||
+      !motivo.trim() ||
+      !analise.trim() ||
+      !solucao.trim()
+    );
+  }, [selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao]);
+
   const handleRegisterClosure = useCallback(async () => {
-    if (!shortDescription) {
-      setError('Preencha pelo menos a short description antes de registrar.');
+    if (isFormIncomplete) {
+      setError('Por favor, preencha todos os campos antes de registrar o fechamento.');
       return;
     }
     try {
@@ -444,7 +457,7 @@ export default function TaxonomyForm() {
     } finally {
       setSavingClosure(false);
     }
-  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao]);
+  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete]);
 
   // ──────────────────── RENDER ────────────────────
 
@@ -474,13 +487,13 @@ export default function TaxonomyForm() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleRegisterClosure}
-            disabled={savingClosure}
+            disabled={savingClosure || isFormIncomplete}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
             style={{
               color: closureSaved ? 'var(--success-color)' : 'var(--accent-primary)',
               background: closureSaved ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
-              opacity: savingClosure ? 0.6 : 1,
-              cursor: savingClosure ? 'wait' : 'pointer',
+              opacity: (savingClosure || isFormIncomplete) && !closureSaved ? 0.4 : 1,
+              cursor: savingClosure ? 'wait' : isFormIncomplete ? 'not-allowed' : 'pointer',
             }}
           >
             {closureSaved ? <Check size={14} /> : <Save size={14} />}
