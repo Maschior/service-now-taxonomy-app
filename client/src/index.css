@@ -517,3 +517,37 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
+/* ============================================
+   THREE COLUMN LAYOUT FOR INTERNAL PAGES
+   ============================================ */
+
+.three-column-layout {
+  display: grid;
+  grid-template-columns: minmax(0, var(--col-left, 1fr)) minmax(0, var(--col-center, 3fr)) minmax(0, var(--col-right, 1fr));
+  gap: 2rem;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.three-column-side {
+  /* Empty spacer columns */
+}
+
+.three-column-content {
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .three-column-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+  }
+  
+  .three-column-side {
+    display: none;
+  }
+}
+

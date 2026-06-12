@@ -8,6 +8,7 @@ import ManageModules from './components/ManageModules';
 import ManageIncidents from './components/ManageIncidents';
 import ManageActions from './components/ManageActions';
 import ManageTags from './components/ManageTags';
+import ThreeColumnLayout from './components/ThreeColumnLayout';
 
 function App() {
   return (
@@ -16,13 +17,13 @@ function App() {
       <main className="w-full px-4 md:px-8 py-6">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/closures" element={<ClosuresPage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/manage/applications" element={<ManageApplications />} />
-          <Route path="/manage/modules" element={<ManageModules />} />
-          <Route path="/manage/incidents" element={<ManageIncidents />} />
-          <Route path="/manage/actions" element={<ManageActions />} />
-          <Route path="/manage/tags" element={<ManageTags />} />
+          <Route path="/closures" element={<ThreeColumnLayout><ClosuresPage /></ThreeColumnLayout>} />
+          <Route path="/admin" element={<ThreeColumnLayout><AdminDashboard /></ThreeColumnLayout>} />
+          <Route path="/manage/applications" element={<ThreeColumnLayout><ManageApplications /></ThreeColumnLayout>} />
+          <Route path="/manage/modules" element={<ThreeColumnLayout><ManageModules /></ThreeColumnLayout>} />
+          <Route path="/manage/incidents" element={<ThreeColumnLayout><ManageIncidents /></ThreeColumnLayout>} />
+          <Route path="/manage/actions" element={<ThreeColumnLayout><ManageActions /></ThreeColumnLayout>} />
+          <Route path="/manage/tags" element={<ThreeColumnLayout><ManageTags /></ThreeColumnLayout>} />
         </Routes>
       </main>
     </Router>
@@ -30,3 +31,4 @@ function App() {
 }
 
 export default App;
+
