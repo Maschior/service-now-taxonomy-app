@@ -688,7 +688,7 @@ export default function TaxonomyForm() {
             <div className="space-y-4 flex-1 flex flex-col min-h-0">
               {/* Application Chips */}
               <div>
-                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                   <span>Aplicação</span>
                   <div className="relative">
                     <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
@@ -728,7 +728,7 @@ export default function TaxonomyForm() {
 
               {/* Module Chips (Grouped by Name) */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                   <span>
                     Módulo
                     {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
@@ -785,7 +785,7 @@ export default function TaxonomyForm() {
             <div className="space-y-4 flex-1 flex flex-col min-h-0">
               {/* Incidents */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                   <span>Incidente Relatado</span>
                   <div className="relative">
                     <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
@@ -823,7 +823,7 @@ export default function TaxonomyForm() {
 
               {/* Actions */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                   <span>Ação Tomada</span>
                   <div className="relative">
                     <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
