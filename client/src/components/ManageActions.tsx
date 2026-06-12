@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { actionApi, applicationApi, handleApiError } from '../services/api';
-import { Action, Application } from '../types/index';
-import { Trash2, Plus, Edit2, X } from 'lucide-react';
+import { actionApi, incidentApi, handleApiError } from '../services/api';
+import { Action, Incident } from '../types/index';
+import { Trash2, Plus, Edit2, X, Activity } from 'lucide-react';
+
+const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
 export default function ManageActions() {
   const [actions, setActions] = useState<Action[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', applicationId: '' });
+  const [formData, setFormData] = useState({ name: '', incidentId: '' });
 
   useEffect(() => {
     fetchData();
@@ -18,12 +20,12 @@ export default function ManageActions() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [actsRes, appsRes] = await Promise.all([
+      const [actsRes, incsRes] = await Promise.all([
         actionApi.getAll(),
-        applicationApi.getAll()
+        incidentApi.getAll()
       ]);
       setActions(actsRes.data);
-      setApplications(appsRes.data);
+      setIncidents(incsRes.data);
       setError(null);
     } catch (err) {
       setError(handleApiError(err));
@@ -34,15 +36,20 @@ export default function ManageActions() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.applicationId) return;
+    if (!formData.name.trim() || !formData.incidentId) return;
+
+    const payload = {
+      name: formData.name,
+      incidentIds: [formData.incidentId]
+    };
 
     try {
       if (editingId) {
-        await actionApi.update(editingId, formData);
+        await actionApi.update(editingId, payload);
       } else {
-        await actionApi.create(formData);
+        await actionApi.create(payload);
       }
-      setFormData({ name: '', applicationId: '' });
+      setFormData({ name: '', incidentId: '' });
       setEditingId(null);
       fetchData();
     } catch (err) {
@@ -53,7 +60,7 @@ export default function ManageActions() {
   const handleEdit = (act: Action) => {
     setFormData({
       name: act.name,
-      applicationId: typeof act.applicationId === 'object' ? act.applicationId._id : act.applicationId
+      incidentId: act.incidentIds?.length ? getId(act.incidentIds[0]) : ''
     });
     setEditingId(act._id);
   };
@@ -69,28 +76,31 @@ export default function ManageActions() {
     }
   };
 
-  const getAppName = (appId: string | Application) => {
-    if (typeof appId === 'object') return appId.name;
-    return applications.find(a => a._id === appId)?.name || 'Unknown';
+  const getIncidentName = (incId: string | Incident) => {
+    const id = getId(incId);
+    return incidents.find(i => i._id === id)?.name || 'Unknown';
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Manage Actions</h1>
+    <div className="space-y-6 animate-fade-in-up">
+      <div className="flex items-center gap-3 mb-6">
+        <Activity className="text-primary w-8 h-8" />
+        <h1 className="text-3xl font-bold m-0">Manage Actions</h1>
+      </div>
 
       {error && <div className="bg-red-50 border border-red-200 p-4 rounded text-red-700">{error}</div>}
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="section-card p-6">
         <h2 className="text-xl font-semibold mb-4">Add/Edit Action</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <select
-            value={formData.applicationId}
-            onChange={(e) => setFormData({ ...formData, applicationId: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg p-2"
+            value={formData.incidentId}
+            onChange={(e) => setFormData({ ...formData, incidentId: e.target.value })}
+            className="form-input"
           >
-            <option value="">Select Application</option>
-            {applications.map(app => (
-              <option key={app._id} value={app._id}>{app.name}</option>
+            <option value="">Select Incident</option>
+            {incidents.map(inc => (
+              <option key={inc._id} value={inc._id}>{inc.name}</option>
             ))}
           </select>
           <input
@@ -98,17 +108,17 @@ export default function ManageActions() {
             placeholder="Action name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg p-2"
+            className="form-input"
           />
           <div className="flex gap-2">
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+            <button type="submit" className="btn-primary flex items-center gap-2">
               <Plus size={18} /> {editingId ? 'Update' : 'Add'}
             </button>
             {editingId && (
               <button
                 type="button"
-                onClick={() => { setEditingId(null); setFormData({ name: '', applicationId: '' }); }}
-                className="bg-slate-400 text-white px-4 py-2 rounded-lg hover:bg-slate-500 flex items-center gap-2"
+                onClick={() => { setEditingId(null); setFormData({ name: '', incidentId: '' }); }}
+                className="btn-ghost flex items-center gap-2"
               >
                 <X size={18} /> Cancel
               </button>
@@ -117,37 +127,39 @@ export default function ManageActions() {
         </form>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <h2 className="text-xl font-semibold p-6 border-b">Existing Actions ({actions.length})</h2>
+      <div className="section-card">
+        <h2 className="text-xl font-semibold p-6 border-b border-white/10">Existing Actions ({actions.length})</h2>
         {loading ? (
           <div className="p-6 text-center">Loading...</div>
         ) : actions.length === 0 ? (
           <div className="p-6 text-center text-slate-500">No actions yet</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
+            <table className="data-table w-full">
+              <thead>
                 <tr>
                   <th className="text-left p-4">Name</th>
-                  <th className="text-left p-4">Application</th>
+                  <th className="text-left p-4">Incident</th>
                   <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {actions.map(act => (
-                  <tr key={act._id} className="border-t hover:bg-slate-50">
+                  <tr key={act._id}>
                     <td className="p-4">{act.name}</td>
-                    <td className="p-4 text-slate-600">{getAppName(act.applicationId)}</td>
+                    <td className="p-4 opacity-70">
+                      {act.incidentIds?.length ? getIncidentName(act.incidentIds[0]) : 'None'}
+                    </td>
                     <td className="p-4 text-right space-x-2">
                       <button
                         onClick={() => handleEdit(act)}
-                        className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                        className="btn-ghost inline-flex items-center gap-1 px-3 py-1"
                       >
                         <Edit2 size={16} /> Edit
                       </button>
                       <button
                         onClick={() => handleDelete(act._id)}
-                        className="text-red-600 hover:text-red-800 inline-flex items-center gap-1"
+                        className="text-red-400 hover:text-red-300 inline-flex items-center gap-1 px-3 py-1"
                       >
                         <Trash2 size={16} /> Delete
                       </button>

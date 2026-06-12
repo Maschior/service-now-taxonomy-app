@@ -1,21 +1,20 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-const actionSchema = new mongoose.Schema(
+export interface IAction extends Document {
+  name: string;
+  incidentIds: mongoose.Types.ObjectId[];
+  description?: string;
+}
+
+const actionSchema = new Schema<IAction>(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    applicationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Application',
-      required: true
-    }
+    name: { type: String, required: true, trim: true },
+    incidentIds: [{ type: Schema.Types.ObjectId, ref: 'Incident', required: true }],
+    description: { type: String, default: '' }
   },
   { timestamps: true }
 );
 
-actionSchema.index({ name: 1, applicationId: 1 }, { unique: true });
+actionSchema.index({ name: 1, incidentIds: 1 });
 
-export const Action = mongoose.model('Action', actionSchema);
+export const Action = mongoose.model<IAction>('Action', actionSchema);

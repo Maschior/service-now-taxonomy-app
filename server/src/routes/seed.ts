@@ -29,31 +29,14 @@ const seed = async () => {
     await TagCategory.deleteMany({});
     await Tag.deleteMany({});
 
+    // Create all applications
     const appMap: Record<string, string> = {};
     for (const appName of initialData.applications) {
       const app = await Application.create({ name: appName });
       appMap[appName] = app._id.toString();
     }
 
-    for (const appName in initialData.relations) {
-      const appId = appMap[appName];
-      if (!appId) continue;
-
-      const data = initialData.relations[appName as keyof typeof initialData.relations];
-
-      for (const moduleName of (data as any).modules) {
-        await Module.create({ name: moduleName, applicationId: appId });
-      }
-
-      for (const incidentName of (data as any).incidents) {
-        await Incident.create({ name: incidentName, applicationId: appId });
-      }
-
-      for (const actionName of (data as any).actions) {
-        await Action.create({ name: actionName, applicationId: appId });
-      }
-    }
-
+    // Create tag categories and tags
     const categoryMap: Record<string, string> = {};
     for (const categoryName of initialData.tagCategories) {
       const category = await TagCategory.create({ name: categoryName });
@@ -66,6 +49,45 @@ const seed = async () => {
 
       for (const tagName of tagNames) {
         await Tag.create({ name: tagName, categoryId });
+      }
+    }
+
+    // Create modules, incidents, and actions per application
+    for (const appName in initialData.relations) {
+      const appId = appMap[appName];
+      if (!appId) continue;
+
+      const data = initialData.relations[appName] as any;
+
+      // Create modules and build a name->id map scoped to this application
+      const moduleMap: Record<string, string> = {};
+      for (const moduleName of data.modules) {
+        const mod = await Module.create({ name: moduleName, applicationId: appId });
+        moduleMap[moduleName] = mod._id.toString();
+      }
+
+      // Create incidents linked to modules via moduleIds array
+      const incidentMap: Record<string, string> = {};
+      for (const incidentName in data.incidents) {
+        const moduleNames: string[] = data.incidents[incidentName];
+        const moduleIds = moduleNames.map(name => {
+          const id = moduleMap[name];
+          if (!id) throw new Error(`Module "${name}" not found for incident "${incidentName}" in app "${appName}"`);
+          return id;
+        });
+        const incident = await Incident.create({ name: incidentName, moduleIds });
+        incidentMap[incidentName] = incident._id.toString();
+      }
+
+      // Create actions linked to incidents via incidentIds array
+      for (const actionName in data.actions) {
+        const incidentNames: string[] = data.actions[actionName];
+        const incidentIds = incidentNames.map(name => {
+          const id = incidentMap[name];
+          if (!id) throw new Error(`Incident "${name}" not found for action "${actionName}" in app "${appName}"`);
+          return id;
+        });
+        await Action.create({ name: actionName, incidentIds });
       }
     }
 

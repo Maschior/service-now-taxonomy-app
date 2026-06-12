@@ -16,14 +16,48 @@
   },
   "relations": {
     "Apriso": {
-      "modules": ["Apriso", "Local Support"],
-      "incidents": ["Access Failure", "Access Request", "Application Failure", "Customer Request", "Login Failure", "No Traceability", "Operation Offline", "Process Failure", "Unavailability"],
-      "actions": ["Access Provided", "Access Restored", "Analysis", "Cancelled", "Contingency Action", "Duplicated", "IPC Restart", "Monitoring", "No Action Needed", "No Issues Found", "Operation Restarted", "Restart", "Service Restart", "Solved By Another Team", "TOP Server Start/Restart"]
+      "modules": ["Production", "Quality"],
+      "incidents": {
+        "Login Failed": ["Production", "Quality"],
+        "System Error": ["Production"],
+        "Data Sync Issue": ["Production", "Quality"],
+        "Report Generation Failed": ["Production"],
+        "Permission Denied": ["Production", "Quality"],
+        "Timeout Error": ["Production"],
+        "Module Not Loading": ["Production", "Quality"],
+        "Data Validation Error": ["Quality"],
+        "Integration Failure": ["Production"]
+      },
+      "actions": {
+        "Password Reset": ["Login Failed", "Permission Denied"],
+        "Cache Clear": ["System Error", "Module Not Loading", "Timeout Error"],
+        "System Restart": ["System Error", "Timeout Error"],
+        "Config Update": ["Module Not Loading", "Integration Failure"],
+        "Database Repair": ["Data Sync Issue", "Data Validation Error"],
+        "Log Analysis": ["System Error", "Timeout Error", "Integration Failure"],
+        "Permission Grant": ["Permission Denied", "Login Failed"],
+        "Report Regeneration": ["Report Generation Failed"],
+        "Sync Retry": ["Data Sync Issue", "Integration Failure"],
+        "Module Reload": ["Module Not Loading"],
+        "Data Correction": ["Data Validation Error", "Data Sync Issue"],
+        "User Account Unlock": ["Login Failed"],
+        "Service Restart": ["System Error", "Timeout Error"],
+        "Patch Application": ["System Error", "Module Not Loading"],
+        "Escalation to L2": ["Login Failed", "System Error", "Data Sync Issue", "Integration Failure"]
+      }
     },
     "CMES": {
-      "modules": ["CMES Core", "Relatórios"],
-      "incidents": ["Bug de Tela", "Falha de Sincronização", "Lentidão"],
-      "actions": ["Correção Aplicada", "Cache Limpo", "Encaminhado N3"]
+      "modules": ["Dashboard", "Reports"],
+      "incidents": {
+        "Dashboard Not Loading": ["Dashboard"],
+        "Report Export Failed": ["Reports"],
+        "Data Refresh Error": ["Dashboard", "Reports"]
+      },
+      "actions": {
+        "Browser Cache Clear": ["Dashboard Not Loading", "Data Refresh Error"],
+        "Export Retry": ["Report Export Failed"],
+        "Manual Refresh": ["Data Refresh Error", "Dashboard Not Loading"]
+      }
     }
   }
 }

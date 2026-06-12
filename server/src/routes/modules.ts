@@ -7,7 +7,16 @@ const router = Router();
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const filter = req.query.applicationId ? { applicationId: req.query.applicationId } : {};
+    const { applicationId, applicationIds } = req.query;
+    let filter: any = {};
+
+    if (applicationId) {
+      filter.applicationId = applicationId;
+    } else if (applicationIds) {
+      const ids = (applicationIds as string).split(',');
+      filter.applicationId = { $in: ids };
+    }
+
     const modules = await Module.find(filter).populate('applicationId').sort({ name: 1 });
     res.json(modules);
   } catch (error) {

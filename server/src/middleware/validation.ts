@@ -21,12 +21,14 @@ export const moduleValidation = [
 
 export const incidentValidation = [
   body('name').trim().notEmpty().withMessage('Incident name is required'),
-  body('applicationId').isMongoId().withMessage('Valid application ID is required')
+  body('moduleIds').isArray({ min: 1 }).withMessage('At least one module ID is required'),
+  body('moduleIds.*').isMongoId().withMessage('Each module ID must be a valid Mongo ID')
 ];
 
 export const actionValidation = [
   body('name').trim().notEmpty().withMessage('Action name is required'),
-  body('applicationId').isMongoId().withMessage('Valid application ID is required')
+  body('incidentIds').isArray({ min: 1 }).withMessage('At least one incident ID is required'),
+  body('incidentIds.*').isMongoId().withMessage('Each incident ID must be a valid Mongo ID')
 ];
 
 export const tagValidation = [

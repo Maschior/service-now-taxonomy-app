@@ -26,17 +26,17 @@ export const moduleApi = {
 };
 
 export const incidentApi = {
-  getAll: (applicationId?: string) =>
-    api.get<Incident[]>('/incidents', { params: { applicationId } }),
-  create: (data: Partial<Incident>) => api.post<Incident>('/incidents', data),
+  getAll: (params?: { moduleId?: string; applicationId?: string }) =>
+    api.get<Incident[]>('/incidents', { params }),
+  create: (data: { name: string; moduleIds: string[] }) => api.post<Incident>('/incidents', data),
   update: (id: string, data: Partial<Incident>) => api.put<Incident>(`/incidents/${id}`, data),
   delete: (id: string) => api.delete(`/incidents/${id}`)
 };
 
 export const actionApi = {
-  getAll: (applicationId?: string) =>
-    api.get<Action[]>('/actions', { params: { applicationId } }),
-  create: (data: Partial<Action>) => api.post<Action>('/actions', data),
+  getAll: (params?: { incidentId?: string; moduleId?: string; applicationId?: string }) =>
+    api.get<Action[]>('/actions', { params }),
+  create: (data: { name: string; incidentIds: string[] }) => api.post<Action>('/actions', data),
   update: (id: string, data: Partial<Action>) => api.put<Action>(`/actions/${id}`, data),
   delete: (id: string) => api.delete(`/actions/${id}`)
 };

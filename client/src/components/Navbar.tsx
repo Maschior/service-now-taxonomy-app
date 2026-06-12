@@ -1,53 +1,152 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Sun, Moon, Settings } from 'lucide-react';
 import { useState } from 'react';
+import { useDarkMode } from '../hooks/useDarkMode';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { theme, toggleTheme } = useDarkMode();
 
-  const links = [
+  const mainLinks = [
     { path: '/', label: 'Home' },
-    { path: '/admin', label: 'Admin Dashboard' },
-    { path: '/manage/applications', label: 'Applications' },
-    { path: '/manage/modules', label: 'Modules' },
-    { path: '/manage/incidents', label: 'Incidents' },
-    { path: '/manage/actions', label: 'Actions' },
-    { path: '/manage/tags', label: 'Tags' }
+    { path: '/admin', label: 'Admin' },
   ];
 
+  const manageLinks = [
+    { path: '/manage/applications', label: 'Apps' },
+    { path: '/manage/modules', label: 'Módulos' },
+    { path: '/manage/incidents', label: 'Incidentes' },
+    { path: '/manage/actions', label: 'Ações' },
+    { path: '/manage/tags', label: 'Tags' },
+  ];
+
+  const allLinks = [...mainLinks, ...manageLinks];
+
   return (
-    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center space-x-3 font-bold text-xl">
-          <div className="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center text-white italic">
-            C
+    <nav className="glass-surface sticky top-0 z-50" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}>
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-lg italic"
+            style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}>
+            T
           </div>
-          <span>Taxonomia</span>
+          <span className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+            Taxonomia
+          </span>
         </Link>
 
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden"
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-
-        <div className={`${isOpen ? 'block' : 'hidden'} md:flex absolute md:relative top-16 md:top-0 left-0 right-0 md:left-auto md:right-auto bg-white md:bg-transparent border-b md:border-b-0 flex-col md:flex-row md:space-x-6 p-6 md:p-0`}>
-          {links.map(link => (
+        {/* Desktop Links */}
+        <div className="hidden lg:flex items-center gap-1">
+          {mainLinks.map(link => (
             <Link
               key={link.path}
               to={link.path}
-              onClick={() => setIsOpen(false)}
-              className={`py-2 md:py-0 font-medium transition-colors ${location.pathname === link.path
-                ? 'text-blue-600 border-b-2 md:border-b-2 border-blue-600'
-                : 'text-slate-600 hover:text-slate-800'}`}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+              style={{
+                color: location.pathname === link.path ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                background: location.pathname === link.path ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+              }}
             >
               {link.label}
             </Link>
           ))}
+
+          <div className="w-px h-5 mx-2" style={{ background: 'var(--border-primary)' }} />
+
+          <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-lg" style={{ background: 'var(--bg-secondary)' }}>
+            <Settings size={14} style={{ color: 'var(--text-muted)', marginRight: '4px', marginLeft: '4px' }} />
+            {manageLinks.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className="px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200"
+                style={{
+                  color: location.pathname === link.path ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  background: location.pathname === link.path ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Right section */}
+        <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-primary)',
+              color: 'var(--text-secondary)',
+            }}
+            aria-label="Toggle Theme"
+          >
+            <div className="relative w-5 h-5">
+              <span
+                className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out"
+                style={{
+                  transform: theme === 'dark' ? 'rotate(90deg) scale(0)' : 'rotate(0) scale(1)',
+                  opacity: theme === 'dark' ? 0 : 1,
+                }}
+              >
+                <Sun size={18} style={{ color: '#f59e0b' }} />
+              </span>
+              <span
+                className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out"
+                style={{
+                  transform: theme === 'dark' ? 'rotate(0) scale(1)' : 'rotate(-90deg) scale(0)',
+                  opacity: theme === 'dark' ? 1 : 0,
+                }}
+              >
+                <Moon size={18} style={{ color: '#818cf8' }} />
+              </span>
+            </div>
+          </button>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-primary)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            {isOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div
+          className="lg:hidden px-6 pb-4 animate-fade-in-up"
+          style={{ borderTop: '1px solid var(--border-primary)' }}
+        >
+          <div className="flex flex-col gap-1 pt-2">
+            {allLinks.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                style={{
+                  color: location.pathname === link.path ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  background: location.pathname === link.path ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

@@ -1,21 +1,20 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-const incidentSchema = new mongoose.Schema(
+export interface IIncident extends Document {
+  name: string;
+  moduleIds: mongoose.Types.ObjectId[];
+  description?: string;
+}
+
+const incidentSchema = new Schema<IIncident>(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    applicationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Application',
-      required: true
-    }
+    name: { type: String, required: true, trim: true },
+    moduleIds: [{ type: Schema.Types.ObjectId, ref: 'Module', required: true }],
+    description: { type: String, default: '' }
   },
   { timestamps: true }
 );
 
-incidentSchema.index({ name: 1, applicationId: 1 }, { unique: true });
+incidentSchema.index({ name: 1, moduleIds: 1 });
 
-export const Incident = mongoose.model('Incident', incidentSchema);
+export const Incident = mongoose.model<IIncident>('Incident', incidentSchema);

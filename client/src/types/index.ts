@@ -10,6 +10,7 @@ export interface Module {
   _id: string;
   name: string;
   applicationId: string | Application;
+  description?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -17,7 +18,8 @@ export interface Module {
 export interface Incident {
   _id: string;
   name: string;
-  applicationId: string | Application;
+  moduleIds: (string | Module)[];
+  description?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,7 +27,8 @@ export interface Incident {
 export interface Action {
   _id: string;
   name: string;
-  applicationId: string | Application;
+  incidentIds: (string | Incident)[];
+  description?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -33,6 +36,7 @@ export interface Action {
 export interface TagCategory {
   _id: string;
   name: string;
+  description?: string;
   createdAt: string;
 }
 
@@ -40,6 +44,7 @@ export interface Tag {
   _id: string;
   name: string;
   categoryId: string | TagCategory;
+  description?: string;
   createdAt: string;
 }
 

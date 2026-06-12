@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, handleApiError } from '../services/api';
-import { BarChart3, Package, AlertTriangle, Zap, Tags } from 'lucide-react';
+import { BarChart3, Package, AlertTriangle, Zap, Tags, ArrowRight, Sparkles, Info } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -23,8 +24,8 @@ export default function AdminDashboard() {
       const [appsRes, modsRes, incsRes, actsRes, tagsRes] = await Promise.all([
         applicationApi.getAll(),
         moduleApi.getAll(),
-        incidentApi.getAll(),
-        actionApi.getAll(),
+        incidentApi.getAll({}),
+        actionApi.getAll({}),
         tagApi.getAll()
       ]);
 
@@ -43,67 +44,112 @@ export default function AdminDashboard() {
     }
   };
 
-  const StatCard = ({ icon: Icon, label, value, color }: any) => (
-    <div className={`bg-white rounded-lg shadow p-6 border-l-4 ${color}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-slate-600 text-sm font-medium">{label}</p>
-          <p className="text-3xl font-bold text-slate-800 mt-2">{value}</p>
-        </div>
-        <Icon size={32} className="text-slate-400" />
-      </div>
-    </div>
-  );
+  const statCards = [
+    { icon: Package, label: 'Applications', value: stats.applications, gradient: 'from-blue-500 to-indigo-500' },
+    { icon: BarChart3, label: 'Modules', value: stats.modules, gradient: 'from-emerald-500 to-teal-500' },
+    { icon: AlertTriangle, label: 'Incidents', value: stats.incidents, gradient: 'from-amber-500 to-orange-500' },
+    { icon: Zap, label: 'Actions', value: stats.actions, gradient: 'from-purple-500 to-violet-500' },
+    { icon: Tags, label: 'Tags', value: stats.tags, gradient: 'from-cyan-500 to-blue-500' },
+  ];
+
+  const quickLinks = [
+    { path: '/manage/applications', label: 'Gerenciar Applications', color: 'var(--accent-primary)' },
+    { path: '/manage/modules', label: 'Gerenciar Modules', color: '#10b981' },
+    { path: '/manage/incidents', label: 'Gerenciar Incidents', color: '#f59e0b' },
+    { path: '/manage/actions', label: 'Gerenciar Actions', color: '#8b5cf6' },
+    { path: '/manage/tags', label: 'Gerenciar Tags', color: '#06b6d4' },
+  ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in-up">
       <div>
-        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-        <p className="text-slate-600 mt-2">Manage your taxonomy data</p>
+        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          Admin Dashboard
+        </h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          Gerencie os dados da taxonomia
+        </p>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 p-4 rounded text-red-700">{error}</div>}
+      {error && (
+        <div className="section-card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
+          <span style={{ color: '#ef4444' }}>{error}</span>
+        </div>
+      )}
 
       {loading ? (
-        <div className="text-center py-12">Loading...</div>
+        <div className="flex items-center justify-center py-16">
+          <Sparkles size={32} className="animate-pulse" style={{ color: 'var(--accent-primary)' }} />
+        </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <StatCard icon={Package} label="Applications" value={stats.applications} color="border-blue-600" />
-            <StatCard icon={BarChart3} label="Modules" value={stats.modules} color="border-green-600" />
-            <StatCard icon={AlertTriangle} label="Incidents" value={stats.incidents} color="border-yellow-600" />
-            <StatCard icon={Zap} label="Actions" value={stats.actions} color="border-purple-600" />
-            <StatCard icon={Tags} label="Tags" value={stats.tags} color="border-indigo-600" />
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 stagger-children">
+            {statCards.map(({ icon: Icon, label, value, gradient }) => (
+              <div key={label} className="stat-card">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                    <Icon size={20} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
+                <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+              </div>
+            ))}
           </div>
 
+          {/* Quick Actions & Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+            <div className="section-card">
+              <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+                Ações Rápidas
+              </h2>
               <div className="space-y-2">
-                <a href="/manage/applications" className="block px-4 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
-                  → Manage Applications
-                </a>
-                <a href="/manage/modules" className="block px-4 py-2 bg-green-50 text-green-600 rounded hover:bg-green-100">
-                  → Manage Modules
-                </a>
-                <a href="/manage/incidents" className="block px-4 py-2 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100">
-                  → Manage Incidents
-                </a>
-                <a href="/manage/actions" className="block px-4 py-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100">
-                  → Manage Actions
-                </a>
-                <a href="/manage/tags" className="block px-4 py-2 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100">
-                  → Manage Tags
-                </a>
+                {quickLinks.map(link => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className="flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 group"
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)' }}
+                  >
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      {link.label}
+                    </span>
+                    <ArrowRight
+                      size={14}
+                      className="transition-transform duration-200 group-hover:translate-x-1"
+                      style={{ color: link.color }}
+                    />
+                  </Link>
+                ))}
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Information</h2>
-              <p className="text-slate-600 text-sm">
-                Use this dashboard to add, edit, and remove applications, modules, incidents, actions, and tags.
-                Existing values are displayed to prevent duplicates.
-              </p>
+            <div className="section-card">
+              <div className="flex items-center gap-2 mb-4">
+                <Info size={16} style={{ color: 'var(--accent-primary)' }} />
+                <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Informações
+                </h2>
+              </div>
+              <div className="space-y-3">
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Use este dashboard para gerenciar aplicações, módulos, incidentes, ações e tags da taxonomia.
+                </p>
+                <div className="text-xs leading-relaxed p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                  <strong style={{ color: 'var(--text-secondary)' }}>Hierarquia:</strong>
+                  <br />
+                  Application → Module → Incident → Action
+                  <br /><br />
+                  <strong style={{ color: 'var(--text-secondary)' }}>Relacionamentos:</strong>
+                  <br />
+                  • 1 App → N Módulos
+                  <br />
+                  • N Módulos ↔ N Incidentes
+                  <br />
+                  • N Incidentes ↔ N Ações
+                </div>
+              </div>
             </div>
           </div>
         </>

@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
 import { tagApi, handleApiError } from '../services/api';
 import { Tag, TagCategory } from '../types/index';
-import { Trash2, Plus, Edit2, X } from 'lucide-react';
+import { Trash2, Plus, Edit2, X, Tags } from 'lucide-react';
+
+const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
 export default function ManageTags() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [categories, setCategories] = useState<TagCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Tag state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', categoryId: '' });
+
+  // Category state
+  const [categoryName, setCategoryName] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -29,6 +36,19 @@ export default function ManageTags() {
       setError(handleApiError(err));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryName.trim()) return;
+
+    try {
+      await tagApi.createCategory({ name: categoryName });
+      setCategoryName('');
+      fetchData();
+    } catch (err) {
+      setError(handleApiError(err));
     }
   };
 
@@ -53,7 +73,7 @@ export default function ManageTags() {
   const handleEdit = (tag: Tag) => {
     setFormData({
       name: tag.name,
-      categoryId: typeof tag.categoryId === 'object' ? tag.categoryId._id : tag.categoryId
+      categoryId: getId(tag.categoryId)
     });
     setEditingId(tag._id);
   };
@@ -70,63 +90,84 @@ export default function ManageTags() {
   };
 
   const getCategoryName = (catId: string | TagCategory) => {
-    if (typeof catId === 'object') return catId.name;
-    return categories.find(c => c._id === catId)?.name || 'Unknown';
+    const id = getId(catId);
+    return categories.find(c => c._id === id)?.name || 'Unknown';
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Manage Tags</h1>
+    <div className="space-y-6 animate-fade-in-up">
+      <div className="flex items-center gap-3 mb-6">
+        <Tags className="text-primary w-8 h-8" />
+        <h1 className="text-3xl font-bold m-0">Manage Tags</h1>
+      </div>
 
       {error && <div className="bg-red-50 border border-red-200 p-4 rounded text-red-700">{error}</div>}
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Add/Edit Tag</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <select
-            value={formData.categoryId}
-            onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg p-2"
-          >
-            <option value="">Select Category</option>
-            {categories.map(cat => (
-              <option key={cat._id} value={cat._id}>{cat.name}</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Tag name (e.g., #PLC)"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg p-2"
-          />
-          <div className="flex gap-2">
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-              <Plus size={18} /> {editingId ? 'Update' : 'Add'}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="section-card p-6 h-fit">
+          <h2 className="text-xl font-semibold mb-4">Add Category</h2>
+          <form onSubmit={handleCategorySubmit} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Category name (e.g., Equipment Type)"
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              className="form-input"
+            />
+            <button type="submit" className="btn-primary flex items-center gap-2">
+              <Plus size={18} /> Add Category
             </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={() => { setEditingId(null); setFormData({ name: '', categoryId: '' }); }}
-                className="bg-slate-400 text-white px-4 py-2 rounded-lg hover:bg-slate-500 flex items-center gap-2"
-              >
-                <X size={18} /> Cancel
+          </form>
+        </div>
+
+        <div className="section-card p-6 h-fit">
+          <h2 className="text-xl font-semibold mb-4">Add/Edit Tag</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <select
+              value={formData.categoryId}
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              className="form-input"
+            >
+              <option value="">Select Category</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Tag name (e.g., #PLC)"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="form-input"
+            />
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary flex items-center gap-2">
+                <Plus size={18} /> {editingId ? 'Update' : 'Add'}
               </button>
-            )}
-          </div>
-        </form>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => { setEditingId(null); setFormData({ name: '', categoryId: '' }); }}
+                  className="btn-ghost flex items-center gap-2"
+                >
+                  <X size={18} /> Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <h2 className="text-xl font-semibold p-6 border-b">Existing Tags ({tags.length})</h2>
+      <div className="section-card">
+        <h2 className="text-xl font-semibold p-6 border-b border-white/10">Existing Tags ({tags.length})</h2>
         {loading ? (
           <div className="p-6 text-center">Loading...</div>
         ) : tags.length === 0 ? (
           <div className="p-6 text-center text-slate-500">No tags yet</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
+            <table className="data-table w-full">
+              <thead>
                 <tr>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Category</th>
@@ -135,19 +176,19 @@ export default function ManageTags() {
               </thead>
               <tbody>
                 {tags.map(tag => (
-                  <tr key={tag._id} className="border-t hover:bg-slate-50">
+                  <tr key={tag._id}>
                     <td className="p-4 font-mono">{tag.name}</td>
-                    <td className="p-4 text-slate-600">{getCategoryName(tag.categoryId)}</td>
+                    <td className="p-4 opacity-70">{getCategoryName(tag.categoryId)}</td>
                     <td className="p-4 text-right space-x-2">
                       <button
                         onClick={() => handleEdit(tag)}
-                        className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                        className="btn-ghost inline-flex items-center gap-1 px-3 py-1"
                       >
                         <Edit2 size={16} /> Edit
                       </button>
                       <button
                         onClick={() => handleDelete(tag._id)}
-                        className="text-red-600 hover:text-red-800 inline-flex items-center gap-1"
+                        className="text-red-400 hover:text-red-300 inline-flex items-center gap-1 px-3 py-1"
                       >
                         <Trash2 size={16} /> Delete
                       </button>

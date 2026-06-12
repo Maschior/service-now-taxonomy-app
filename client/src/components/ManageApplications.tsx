@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { applicationApi, handleApiError } from '../services/api';
 import { Application } from '../types/index';
-import { Trash2, Plus, Edit2, X } from 'lucide-react';
+import { Trash2, Plus, Edit2, X, Package } from 'lucide-react';
 
 export default function ManageApplications() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -62,12 +62,15 @@ export default function ManageApplications() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Manage Applications</h1>
+    <div className="space-y-6 animate-fade-in-up">
+      <div className="flex items-center gap-3 mb-6">
+        <Package className="text-primary w-8 h-8" />
+        <h1 className="text-3xl font-bold m-0">Manage Applications</h1>
+      </div>
 
       {error && <div className="bg-red-50 border border-red-200 p-4 rounded text-red-700">{error}</div>}
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="section-card p-6">
         <h2 className="text-xl font-semibold mb-4">Add/Edit Application</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -75,24 +78,24 @@ export default function ManageApplications() {
             placeholder="Application name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg p-2"
+            className="form-input"
           />
           <textarea
             placeholder="Description (optional)"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full border border-slate-300 rounded-lg p-2"
+            className="form-input"
             rows={3}
           />
           <div className="flex gap-2">
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+            <button type="submit" className="btn-primary flex items-center gap-2">
               <Plus size={18} /> {editingId ? 'Update' : 'Add'}
             </button>
             {editingId && (
               <button
                 type="button"
                 onClick={() => { setEditingId(null); setFormData({ name: '', description: '' }); }}
-                className="bg-slate-400 text-white px-4 py-2 rounded-lg hover:bg-slate-500 flex items-center gap-2"
+                className="btn-ghost flex items-center gap-2"
               >
                 <X size={18} /> Cancel
               </button>
@@ -101,16 +104,16 @@ export default function ManageApplications() {
         </form>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <h2 className="text-xl font-semibold p-6 border-b">Existing Applications ({applications.length})</h2>
+      <div className="section-card">
+        <h2 className="text-xl font-semibold p-6 border-b border-white/10">Existing Applications ({applications.length})</h2>
         {loading ? (
           <div className="p-6 text-center">Loading...</div>
         ) : applications.length === 0 ? (
           <div className="p-6 text-center text-slate-500">No applications yet</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
+            <table className="data-table w-full">
+              <thead>
                 <tr>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Description</th>
@@ -119,19 +122,19 @@ export default function ManageApplications() {
               </thead>
               <tbody>
                 {applications.map(app => (
-                  <tr key={app._id} className="border-t hover:bg-slate-50">
+                  <tr key={app._id}>
                     <td className="p-4">{app.name}</td>
-                    <td className="p-4 text-slate-600">{app.description || '-'}</td>
+                    <td className="p-4 opacity-70">{app.description || '-'}</td>
                     <td className="p-4 text-right space-x-2">
                       <button
                         onClick={() => handleEdit(app)}
-                        className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                        className="btn-ghost inline-flex items-center gap-1 px-3 py-1"
                       >
                         <Edit2 size={16} /> Edit
                       </button>
                       <button
                         onClick={() => handleDelete(app._id)}
-                        className="text-red-600 hover:text-red-800 inline-flex items-center gap-1"
+                        className="text-red-400 hover:text-red-300 inline-flex items-center gap-1 px-3 py-1"
                       >
                         <Trash2 size={16} /> Delete
                       </button>
