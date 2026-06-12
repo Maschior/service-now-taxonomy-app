@@ -135,26 +135,99 @@ export default function TaxonomyForm() {
 
   // ──────────────────── SELECTION HANDLERS ────────────────────
 
+  const autoSelectChain = (startLevel: 'app' | 'module' | 'incident' | 'action', id: string, unselect: boolean = false) => {
+    if (unselect) {
+      if (startLevel === 'action') setSelectedAction('');
+      if (startLevel === 'incident') { setSelectedIncident(''); setSelectedAction(''); }
+      if (startLevel === 'module') { setSelectedModule(''); setSelectedIncident(''); setSelectedAction(''); }
+      if (startLevel === 'app') { setSelectedApp(''); setSelectedModule(''); setSelectedIncident(''); setSelectedAction(''); }
+      return;
+    }
+
+    let finalApp = selectedApp;
+    let finalMod = selectedModule;
+    let finalInc = selectedIncident;
+    let finalAct = selectedAction;
+
+    if (startLevel === 'action') {
+      finalAct = id;
+      const action = allActions.find(a => a._id === id);
+      if (!action?.incidentIds.map(getId).includes(finalInc)) {
+        const validIncs = allIncidents.filter(i => action?.incidentIds.map(getId).includes(i._id)).sort((a,b) => a.name.localeCompare(b.name));
+        finalInc = validIncs[0]?._id || '';
+      }
+    }
+
+    if (startLevel === 'incident' || (startLevel === 'action' && finalInc)) {
+      if (startLevel === 'incident') finalInc = id;
+      const incident = allIncidents.find(i => i._id === finalInc);
+      if (!incident?.moduleIds.map(getId).includes(finalMod)) {
+        const validMods = allModules.filter(m => incident?.moduleIds.map(getId).includes(m._id)).sort((a,b) => a.name.localeCompare(b.name));
+        finalMod = validMods[0]?._id || '';
+      }
+    }
+
+    if (startLevel === 'module' || ((startLevel === 'incident' || startLevel === 'action') && finalMod)) {
+      if (startLevel === 'module') finalMod = id;
+      const module = allModules.find(m => m._id === finalMod);
+      if (module && getId(module.applicationId) !== finalApp) {
+        finalApp = getId(module.applicationId);
+      }
+    }
+
+    if (startLevel === 'app') {
+      finalApp = id;
+      if (!finalApp) {
+        finalMod = '';
+        finalInc = '';
+        finalAct = '';
+      }
+    }
+
+    // Cascade downwards to fill missing pieces with the first available option
+    if (finalApp) {
+      const module = allModules.find(m => m._id === finalMod);
+      if (!module || getId(module.applicationId) !== finalApp) {
+        const validMods = allModules.filter(m => getId(m.applicationId) === finalApp).sort((a,b) => a.name.localeCompare(b.name));
+        finalMod = validMods[0]?._id || '';
+      }
+    }
+    if (finalMod) {
+      const incident = allIncidents.find(i => i._id === finalInc);
+      if (!incident || !incident.moduleIds.map(getId).includes(finalMod)) {
+        const validIncs = allIncidents.filter(i => i.moduleIds.map(getId).includes(finalMod)).sort((a,b) => a.name.localeCompare(b.name));
+        finalInc = validIncs[0]?._id || '';
+      }
+    }
+    if (finalInc) {
+      const action = allActions.find(a => a._id === finalAct);
+      if (!action || !action.incidentIds.map(getId).includes(finalInc)) {
+        const validActs = allActions.filter(a => a.incidentIds.map(getId).includes(finalInc)).sort((a,b) => a.name.localeCompare(b.name));
+        finalAct = validActs[0]?._id || '';
+      }
+    }
+
+    setSelectedApp(finalApp);
+    setSelectedModule(finalMod);
+    setSelectedIncident(finalInc);
+    setSelectedAction(finalAct);
+  };
+
   const handleAppChange = (appId: string) => {
-    setSelectedApp(appId);
-    setSelectedModule('');
-    setSelectedIncident('');
-    setSelectedAction('');
+    if (!appId) autoSelectChain('app', '', true);
+    else autoSelectChain('app', appId, false);
   };
 
   const handleModuleClick = (moduleId: string) => {
-    setSelectedModule(prev => (prev === moduleId ? '' : moduleId));
-    setSelectedIncident('');
-    setSelectedAction('');
+    autoSelectChain('module', moduleId, selectedModule === moduleId);
   };
 
   const handleIncidentClick = (incidentId: string) => {
-    setSelectedIncident(prev => (prev === incidentId ? '' : incidentId));
-    setSelectedAction('');
+    autoSelectChain('incident', incidentId, selectedIncident === incidentId);
   };
 
   const handleActionClick = (actionId: string) => {
-    setSelectedAction(prev => (prev === actionId ? '' : actionId));
+    autoSelectChain('action', actionId, selectedAction === actionId);
   };
 
   // ──────────────────── TAG LOGIC ────────────────────
@@ -232,236 +305,240 @@ export default function TaxonomyForm() {
   return (
     <div className="animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Taxonomia de Chamados
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
             Monte a short description e resolution notes
           </p>
         </div>
-        <button onClick={handleClearAll} className="btn-ghost text-sm">
+        <button onClick={handleClearAll} className="btn-ghost text-xs px-3 py-1">
           Limpar Tudo
         </button>
       </div>
 
       {error && (
-        <div className="section-card mb-6 flex items-center gap-2"
+        <div className="section-card mb-4 flex items-center gap-2 py-2"
           style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
           <AlertCircle size={16} style={{ color: '#ef4444' }} />
-          <span style={{ color: '#ef4444' }}>{error}</span>
+          <span style={{ color: '#ef4444' }} className="text-sm">{error}</span>
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* LEFT: Form */}
-        <div className="w-full lg:w-2/3 space-y-6 stagger-children">
+        <div className="w-full lg:w-2/3 flex flex-col gap-4 stagger-children">
 
-          {/* Section 1: Contexto */}
-          <div className="section-card">
-            <div className="flex items-center gap-2 mb-5 pb-3" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-              <div className="p-2 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
-                <LayoutTemplate size={18} style={{ color: 'var(--accent-primary)' }} />
-              </div>
-              <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-                1. Contexto do Chamado
-              </h2>
-            </div>
-
-            <div className="space-y-5">
-              {/* Application */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Aplicação
-                </label>
-                <select
-                  value={selectedApp}
-                  onChange={(e) => handleAppChange(e.target.value)}
-                  className="form-input max-w-md"
-                >
-                  <option value="">Selecione uma aplicação...</option>
-                  {applications.map(a => (
-                    <option key={a._id} value={a._id}>{a.name}</option>
-                  ))}
-                </select>
+          {/* Top Row: Contexto & Problema */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Section 1: Contexto */}
+            <div className="section-card flex flex-col">
+              <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
+                  <LayoutTemplate size={16} style={{ color: 'var(--accent-primary)' }} />
+                </div>
+                <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  1. Contexto do Chamado
+                </h2>
               </div>
 
-              {/* Modules */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Módulo
-                  {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {filteredModules.length > 0 ? (
-                    filteredModules.map(m => (
-                      <button
-                        key={m._id}
-                        onClick={() => handleModuleClick(m._id)}
-                        className={`chip ${selectedModule === m._id ? 'active' : ''}`}
-                        style={
-                          selectedModule !== m._id && highlightedModuleIds.has(m._id)
-                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
-                            : {}
-                        }
-                      >
-                        {m.name}
-                      </button>
-                    ))
-                  ) : (
-                    <span className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                      {selectedApp ? 'Nenhum módulo encontrado.' : 'Aguardando seleção...'}
-                    </span>
-                  )}
+              <div className="space-y-4 flex-1">
+                {/* Application */}
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                    Aplicação
+                  </label>
+                  <select
+                    value={selectedApp}
+                    onChange={(e) => handleAppChange(e.target.value)}
+                    className="form-input w-full"
+                  >
+                    <option value="">Selecione uma aplicação...</option>
+                    {applications.map(a => (
+                      <option key={a._id} value={a._id}>{a.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Modules */}
+                <div className="flex-1 flex flex-col min-h-0">
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                    Módulo
+                    {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] pr-1 pb-1">
+                    {filteredModules.length > 0 ? (
+                      filteredModules.map(m => (
+                        <button
+                          key={m._id}
+                          onClick={() => handleModuleClick(m._id)}
+                          className={`chip text-xs px-2.5 py-1 ${selectedModule === m._id ? 'active' : ''}`}
+                          style={
+                            selectedModule !== m._id && highlightedModuleIds.has(m._id)
+                              ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                              : {}
+                          }
+                        >
+                          {m.name}
+                        </button>
+                      ))
+                    ) : (
+                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                        {selectedApp ? 'Nenhum módulo encontrado.' : 'Aguardando seleção...'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Section 2: Problema e Resolução */}
-          <div className="section-card">
-            <div className="flex items-center gap-2 mb-5 pb-3" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-              <div className="p-2 rounded-lg" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                <Wrench size={18} style={{ color: 'var(--accent-secondary)' }} />
+            {/* Section 2: Problema e Resolução */}
+            <div className="section-card flex flex-col">
+              <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                  <Wrench size={16} style={{ color: 'var(--accent-secondary)' }} />
+                </div>
+                <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  2. Problema e Resolução
+                </h2>
               </div>
-              <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-                2. Problema e Resolução
-              </h2>
-            </div>
 
-            <div className="space-y-5">
-              {/* Incidents */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Incidente Relatado
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {filteredIncidents.length > 0 ? (
-                    filteredIncidents.map(i => (
-                      <button
-                        key={i._id}
-                        onClick={() => handleIncidentClick(i._id)}
-                        disabled={!selectedApp}
-                        className={`chip ${selectedIncident === i._id ? 'active' : ''}`}
-                        style={
-                          selectedIncident !== i._id && highlightedIncidentIds.has(i._id)
-                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
-                            : {}
-                        }
-                      >
-                        {i.name}
-                      </button>
-                    ))
-                  ) : (
-                    <span className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
-                  )}
+              <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                {/* Incidents */}
+                <div className="flex-1 flex flex-col min-h-0">
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                    Incidente Relatado
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] pr-1 pb-1">
+                    {filteredIncidents.length > 0 ? (
+                      filteredIncidents.map(i => (
+                        <button
+                          key={i._id}
+                          onClick={() => handleIncidentClick(i._id)}
+                          className={`chip text-xs px-2.5 py-1 ${selectedIncident === i._id ? 'active' : ''}`}
+                          style={
+                            selectedIncident !== i._id && highlightedIncidentIds.has(i._id)
+                              ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                              : {}
+                          }
+                        >
+                          {i.name}
+                        </button>
+                      ))
+                    ) : (
+                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex-1 flex flex-col min-h-0">
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                    Ação Tomada
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] pr-1 pb-1">
+                    {filteredActions.length > 0 ? (
+                      filteredActions.map(a => (
+                        <button
+                          key={a._id}
+                          onClick={() => handleActionClick(a._id)}
+                          className={`chip text-xs px-2.5 py-1 ${selectedAction === a._id ? 'active' : ''}`}
+                        >
+                          {a.name}
+                        </button>
+                      ))
+                    ) : (
+                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* Actions */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Ação Tomada
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {filteredActions.length > 0 ? (
-                    filteredActions.map(a => (
-                      <button
-                        key={a._id}
-                        onClick={() => handleActionClick(a._id)}
-                        disabled={!selectedApp}
-                        className={`chip ${selectedAction === a._id ? 'active' : ''}`}
-                      >
-                        {a.name}
-                      </button>
-                    ))
-                  ) : (
-                    <span className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
-                  )}
-                </div>
-              </div>
             </div>
+
           </div>
 
           {/* Section 3: Tags & Notes */}
           <div className="section-card">
-            <div className="flex items-center gap-2 mb-5 pb-3" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-              <div className="p-2 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
-                <Tag size={18} style={{ color: 'var(--accent-tertiary)' }} />
+            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
+              <div className="p-1.5 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
+                <Tag size={16} style={{ color: 'var(--accent-tertiary)' }} />
               </div>
-              <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                 3. Classificação e Notas
               </h2>
             </div>
 
-            <div className="space-y-5">
-              {/* Category Tabs - multi select */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Categorias
-                  <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(selecione uma ou mais)</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {tagCategories.map(cat => (
-                    <button
-                      key={cat._id}
-                      onClick={() => toggleCategory(cat._id)}
-                      className={`category-tab ${activeCategories.includes(cat._id) ? 'active' : ''}`}
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Tags
-                  {selectedTags.length > 0 && (
-                    <span className="font-normal ml-1" style={{ color: 'var(--accent-secondary)' }}>
-                      ({selectedTags.length} selecionada{selectedTags.length > 1 ? 's' : ''})
-                    </span>
-                  )}
-                </label>
-                <div className="flex flex-wrap gap-2 min-h-[48px]">
-                  {visibleTags.length > 0 ? (
-                    visibleTags.map(tag => (
+            <div className="space-y-4">
+              {/* Category Tabs & Tags in a row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col min-h-0">
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                    Categorias
+                    <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(selecione múltiplas)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[80px] pr-1 pb-1">
+                    {tagCategories.map(cat => (
                       <button
-                        key={tag._id}
-                        onClick={() => toggleTag(tag._id)}
-                        className={`tag-chip ${selectedTags.includes(tag._id) ? 'active' : ''}`}
+                        key={cat._id}
+                        onClick={() => toggleCategory(cat._id)}
+                        className={`category-tab text-xs px-2 py-1 ${activeCategories.includes(cat._id) ? 'active' : ''}`}
                       >
-                        {tag.name}
+                        {cat.name}
                       </button>
-                    ))
-                  ) : (
-                    <span className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                      {activeCategories.length === 0 ? 'Todas as tags exibidas. Filtre por categoria acima.' : 'Nenhuma tag nesta categoria.'}
-                    </span>
-                  )}
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col min-h-0">
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                    Tags
+                    {selectedTags.length > 0 && (
+                      <span className="font-normal ml-1" style={{ color: 'var(--accent-secondary)' }}>
+                        ({selectedTags.length})
+                      </span>
+                    )}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[80px] pr-1 pb-1 min-h-[28px]">
+                    {visibleTags.length > 0 ? (
+                      visibleTags.map(tag => (
+                        <button
+                          key={tag._id}
+                          onClick={() => toggleTag(tag._id)}
+                          className={`tag-chip text-xs px-2 py-1 ${selectedTags.includes(tag._id) ? 'active' : ''}`}
+                        >
+                          {tag.name}
+                        </button>
+                      ))
+                    ) : (
+                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                        {activeCategories.length === 0 ? 'Filtre por categoria ao lado.' : 'Vazio.'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Motivo & Análise */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Motivo</label>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Motivo</label>
                   <textarea
                     value={motivo}
                     onChange={(e) => setMotivo(e.target.value)}
                     placeholder="Ex: Utilizador bloqueado no AD..."
-                    className="form-input resize-none h-24"
+                    className="form-input resize-none h-16 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Análise</label>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Análise</label>
                   <textarea
                     value={analise}
                     onChange={(e) => setAnalise(e.target.value)}
                     placeholder="Ex: Acedido ao AD, verificado bloqueio..."
-                    className="form-input resize-none h-24"
+                    className="form-input resize-none h-16 text-sm"
                   />
                 </div>
               </div>
