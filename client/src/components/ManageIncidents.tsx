@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { incidentApi, moduleApi, handleApiError } from '../services/api';
-import { Incident, Module } from '../types/index';
+import { useState, useEffect, useMemo } from 'react';
+import { incidentApi, moduleApi, applicationApi, handleApiError } from '../services/api';
+import { Incident, Module, Application } from '../types/index';
 import { Trash2, Plus, Edit2, X, AlertTriangle } from 'lucide-react';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
@@ -8,11 +8,14 @@ const getId = (item: any) => typeof item === 'object' && item !== null ? item._i
 export default function ManageIncidents() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', moduleId: '' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [applicationFilter, setApplicationFilter] = useState('');
+  const [moduleFilter, setModuleFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -22,12 +25,14 @@ export default function ManageIncidents() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [incsRes, modsRes] = await Promise.all([
+      const [incsRes, modsRes, appsRes] = await Promise.all([
         incidentApi.getAll(),
-        moduleApi.getAll()
+        moduleApi.getAll(),
+        applicationApi.getAll()
       ]);
       setIncidents(incsRes.data);
       setModules(modsRes.data);
+      setApplications(appsRes.data);
       setError(null);
     } catch (err) {
       setError(handleApiError(err));
@@ -79,7 +84,25 @@ export default function ManageIncidents() {
     }
   };
 
-  const filteredItems = incidents.filter(inc => inc.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredItems = incidents.filter(inc => {
+    const matchesName = inc.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let matchesApp = true;
+    if (applicationFilter) {
+      // Find modules belonging to this application
+      const appModules = modules.filter(m => getId(m.applicationId) === applicationFilter).map(m => m._id);
+      matchesApp = inc.moduleIds?.some((mid: any) => appModules.includes(getId(mid)));
+    }
+    
+    const matchesModule = moduleFilter ? inc.moduleIds?.map(m => getId(m)).includes(moduleFilter) : true;
+    
+    return matchesName && matchesApp && matchesModule;
+  });
+
+  const availableModulesForFilter = useMemo(() => {
+    if (!applicationFilter) return modules;
+    return modules.filter(m => getId(m.applicationId) === applicationFilter);
+  }, [modules, applicationFilter]);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredItems.length && filteredItems.length > 0) {
@@ -166,7 +189,30 @@ export default function ManageIncidents() {
       <div className="section-card">
         <div className="p-6 border-b border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <h2 className="text-xl font-semibold m-0">Existing Incidents ({filteredItems.length})</h2>
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <select
+              value={applicationFilter}
+              onChange={(e) => {
+                setApplicationFilter(e.target.value);
+                setModuleFilter(''); // Reset module filter when app changes
+              }}
+              className="form-input text-sm w-full md:w-auto min-w-[150px]"
+            >
+              <option value="">All Applications</option>
+              {applications.map(app => (
+                <option key={app._id} value={app._id}>{app.name}</option>
+              ))}
+            </select>
+            <select
+              value={moduleFilter}
+              onChange={(e) => setModuleFilter(e.target.value)}
+              className="form-input text-sm w-full md:w-auto min-w-[150px]"
+            >
+              <option value="">All Modules</option>
+              {availableModulesForFilter.map(mod => (
+                <option key={mod._id} value={mod._id}>{mod.name}</option>
+              ))}
+            </select>
             <input
               type="text"
               placeholder="Filter by name..."

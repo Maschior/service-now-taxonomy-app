@@ -95,7 +95,7 @@ export default function ManageTags() {
 
   const filteredItems = tags.filter(tag => {
     const matchesName = tag.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter ? tag.categoryId === categoryFilter : true;
+    const matchesCategory = categoryFilter ? getId(tag.categoryId) === categoryFilter : true;
     return matchesName && matchesCategory;
   });
 

@@ -13,6 +13,7 @@ export default function ManageModules() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', applicationId: '' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [applicationFilter, setApplicationFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -74,7 +75,11 @@ export default function ManageModules() {
     }
   };
 
-  const filteredItems = modules.filter(mod => mod.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredItems = modules.filter(mod => {
+    const matchesName = mod.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesApp = applicationFilter ? getId(mod.applicationId) === applicationFilter : true;
+    return matchesName && matchesApp;
+  });
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredItems.length && filteredItems.length > 0) {
@@ -162,6 +167,16 @@ export default function ManageModules() {
         <div className="p-6 border-b border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <h2 className="text-xl font-semibold m-0">Existing Modules ({filteredItems.length})</h2>
           <div className="flex gap-2 w-full md:w-auto">
+            <select
+              value={applicationFilter}
+              onChange={(e) => setApplicationFilter(e.target.value)}
+              className="form-input text-sm w-full md:w-48"
+            >
+              <option value="">All Applications</option>
+              {applications.map(app => (
+                <option key={app._id} value={app._id}>{app.name}</option>
+              ))}
+            </select>
             <input
               type="text"
               placeholder="Filter by name..."
