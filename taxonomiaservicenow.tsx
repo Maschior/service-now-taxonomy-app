@@ -75,11 +75,49 @@ export default function App() {
   };
 
   const handleCopy = (text, type) => {
-    navigator.clipboard.writeText(text);
-    setCopiedStates(prev => ({ ...prev, [type]: true }));
-    setTimeout(() => {
-      setCopiedStates(prev => ({ ...prev, [type]: false }));
-    }, 2000);
+    if (!text) return;
+
+    const fallbackCopy = (val) => {
+      const textArea = document.createElement("textarea");
+      textArea.value = val;
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.width = "2em";
+      textArea.style.height = "2em";
+      textArea.style.padding = "0";
+      textArea.style.border = "none";
+      textArea.style.outline = "none";
+      textArea.style.boxShadow = "none";
+      textArea.style.background = "transparent";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopiedStates(prev => ({ ...prev, [type]: true }));
+          setTimeout(() => setCopiedStates(prev => ({ ...prev, [type]: false })), 2000);
+        }
+      } catch (err) {
+        console.error('Fallback: Unable to copy', err);
+      }
+      document.body.removeChild(textArea);
+    };
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          setCopiedStates(prev => ({ ...prev, [type]: true }));
+          setTimeout(() => setCopiedStates(prev => ({ ...prev, [type]: false })), 2000);
+        })
+        .catch(err => {
+          console.warn('Clipboard API failed, trying fallback', err);
+          fallbackCopy(text);
+        });
+    } else {
+      fallbackCopy(text);
+    }
   };
 
   // --- STRINGS GERADAS ---

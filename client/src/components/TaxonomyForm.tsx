@@ -437,9 +437,52 @@ export default function TaxonomyForm() {
   );
 
   const handleCopy = (text: string, type: 'short' | 'resolution') => {
-    navigator.clipboard.writeText(text);
-    setCopiedStates(prev => ({ ...prev, [type]: true }));
-    setTimeout(() => setCopiedStates(prev => ({ ...prev, [type]: false })), 2000);
+    if (!text) return;
+
+    const fallbackCopy = (val: string) => {
+      const textArea = document.createElement("textarea");
+      textArea.value = val;
+      // Prevent scrolling and keep it invisible
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.width = "2em";
+      textArea.style.height = "2em";
+      textArea.style.padding = "0";
+      textArea.style.border = "none";
+      textArea.style.outline = "none";
+      textArea.style.boxShadow = "none";
+      textArea.style.background = "transparent";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopiedStates(prev => ({ ...prev, [type]: true }));
+          setTimeout(() => setCopiedStates(prev => ({ ...prev, [type]: false })), 2000);
+        } else {
+          console.error('Fallback: Copy command was unsuccessful');
+        }
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+      }
+      document.body.removeChild(textArea);
+    };
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          setCopiedStates(prev => ({ ...prev, [type]: true }));
+          setTimeout(() => setCopiedStates(prev => ({ ...prev, [type]: false })), 2000);
+        })
+        .catch(err => {
+          console.warn('Clipboard API failed, trying fallback', err);
+          fallbackCopy(text);
+        });
+    } else {
+      fallbackCopy(text);
+    }
   };
 
   const handleClearAll = () => {
