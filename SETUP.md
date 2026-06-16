@@ -5,26 +5,16 @@
 - MongoDB 7.0+ locally or MongoDB Atlas account
 - Git
 
-## Option 1: Quick Start with npm
+## Option 1: Quick Start with Mock DB (Local Dev, no Docker)
 
-### 1. Start MongoDB
-```bash
-# If using local MongoDB
-mongod --dbpath /path/to/db
-
-# OR use Docker
-docker run -d -p 27017:27017 --name mongodb mongo:7.0
-```
-
-### 2. Backend Setup
+### 1. Backend Setup
 ```bash
 cd server
 npm install
-npm run seed   # Populate database with initial data
-npm run dev    # Starts on http://localhost:5000
+npm run dev:mock    # Starts in-memory MongoDB and auto-seeds data on http://localhost:5000
 ```
 
-### 3. Frontend Setup (new terminal)
+### 2. Frontend Setup (new terminal)
 ```bash
 cd client
 npm install
@@ -33,7 +23,9 @@ npm run dev    # Starts on http://localhost:5173
 
 Open `http://localhost:5173` in your browser.
 
-## Option 2: Docker Compose (All-in-One)
+## Option 2: Docker Compose (Production / Full Stack)
+
+Em produção, os mapeamentos de pasta não ocorrem para que a imagem construída seja usada.
 
 ```bash
 docker-compose up --build
@@ -41,7 +33,7 @@ docker-compose up --build
 
 - Backend: http://localhost:5000
 - Frontend: http://localhost:5173
-- MongoDB: localhost:27017
+- MongoDB: localmente na rede do docker
 
 ## Features to Try
 

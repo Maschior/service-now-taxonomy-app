@@ -29,9 +29,9 @@ A full-stack web application for managing ServiceNow incident taxonomy and class
 
 ## Quick Start
 
-### Run with Docker Compose (Recommended)
+### Run with Docker Compose (Production / Full Stack)
 
-To run the entire stack (Frontend, Backend, and MongoDB) instantly:
+Para rodar em produção (ou com o stack completo isolado), os containers não mapeiam volumes locais de código. Eles compilam a versão atual para rodar.
 
 ```bash
 docker-compose up --build
@@ -46,16 +46,15 @@ docker-compose up --build
 
 #### Prerequisites
 - Node.js 18+
-- MongoDB running locally or a remote MongoDB URI
 
-#### 1. Backend Setup
+#### 1. Backend Setup (with in-memory Mock DB)
 
 ```bash
 cd server
 cp .env.example .env
 npm install
-npm run seed  # Seed the database with sample taxonomy data
-npm run dev   # Start the Express server on port 5000
+npm run dev:mock  # Starts the Express server with an in-memory MongoDB on port 5000 and auto-seeds data
+# (If you have a real local MongoDB, you can use `npm run dev` instead)
 ```
 
 #### 2. Frontend Setup

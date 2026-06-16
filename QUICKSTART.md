@@ -2,34 +2,26 @@
 
 ## 🚀 Get Running in 2 Minutes
 
-### Option A: Docker (Easiest)
+### Option A: Docker Compose (Production / Full Stack)
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 Open http://localhost:5173 in your browser.
 
-### Option B: Manual with Local MongoDB
+### Option B: Local Development with Mock DB (No Docker)
 
 **Prerequisites:**
 - Node.js 18+
-- MongoDB running locally (or use MongoDB Atlas connection string)
 
-**Terminal 1 - Start MongoDB:**
-```bash
-mongod  # macOS/Linux
-# or use MongoDB Atlas URL in .env
-```
-
-**Terminal 2 - Backend:**
+**Terminal 1 - Backend:**
 ```bash
 cd server
 npm install
-npm run seed
-npm run dev
+npm run dev:mock
 ```
-Backend ready at: http://localhost:5000
+Backend ready at: http://localhost:5000 (Uses in-memory auto-seeded MongoDB)
 
-**Terminal 3 - Frontend:**
+**Terminal 2 - Frontend:**
 ```bash
 cd client
 npm install

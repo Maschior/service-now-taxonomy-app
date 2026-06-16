@@ -14,84 +14,81 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const dataPath = join(__dirname, '../../seeds/initialData.json');
-const initialData = JSON.parse(readFileSync(dataPath, 'utf-8'));
+
+export const performSeed = async () => {
+  const dataPath = join(__dirname, '../../seeds/initialData.json');
+  const initialData = JSON.parse(readFileSync(dataPath, 'utf-8'));
+
+  console.log('Seeding database...');
+  await Application.deleteMany({});
+  await Module.deleteMany({});
+  await Incident.deleteMany({});
+  await Action.deleteMany({});
+  await TagCategory.deleteMany({});
+  await Tag.deleteMany({});
+
+  const appMap: Record<string, string> = {};
+  for (const appName of initialData.applications) {
+    const app = await Application.create({ name: appName });
+    appMap[appName] = app._id.toString();
+  }
+
+  const categoryMap: Record<string, string> = {};
+  for (const categoryName of initialData.tagCategories) {
+    const category = await TagCategory.create({ name: categoryName });
+    categoryMap[categoryName] = category._id.toString();
+  }
+
+  for (const categoryName in initialData.tags) {
+    const categoryId = categoryMap[categoryName];
+    const tagNames = initialData.tags[categoryName as keyof typeof initialData.tags];
+
+    for (const tagName of tagNames) {
+      await Tag.create({ name: tagName, categoryId });
+    }
+  }
+
+  for (const appName in initialData.relations) {
+    const appId = appMap[appName];
+    if (!appId) continue;
+
+    const data = initialData.relations[appName] as any;
+
+    const moduleMap: Record<string, string> = {};
+    for (const moduleName of data.modules) {
+      const mod = await Module.create({ name: moduleName, applicationId: appId });
+      moduleMap[moduleName] = mod._id.toString();
+    }
+
+    const incidentMap: Record<string, string> = {};
+    for (const incidentName in data.incidents) {
+      const moduleNames: string[] = data.incidents[incidentName];
+      const moduleIds = moduleNames.map((name: string) => {
+        const id = moduleMap[name];
+        if (!id) throw new Error(`Module "${name}" not found for incident "${incidentName}" in app "${appName}"`);
+        return id;
+      });
+      const incident = await Incident.create({ name: incidentName, moduleIds });
+      incidentMap[incidentName] = incident._id.toString();
+    }
+
+    for (const actionName in data.actions) {
+      const incidentNames: string[] = data.actions[actionName];
+      const incidentIds = incidentNames.map((name: string) => {
+        const id = incidentMap[name];
+        if (!id) throw new Error(`Incident "${name}" not found for action "${actionName}" in app "${appName}"`);
+        return id;
+      });
+      await Action.create({ name: actionName, incidentIds });
+    }
+  }
+  console.log('✓ Database seeded successfully');
+};
 
 const seed = async () => {
   try {
     await connectDB();
-    console.log('Seeding database...');
-
-    await Application.deleteMany({});
-    await Module.deleteMany({});
-    await Incident.deleteMany({});
-    await Action.deleteMany({});
-    await TagCategory.deleteMany({});
-    await Tag.deleteMany({});
-
-    // Create all applications
-    const appMap: Record<string, string> = {};
-    for (const appName of initialData.applications) {
-      const app = await Application.create({ name: appName });
-      appMap[appName] = app._id.toString();
-    }
-
-    // Create tag categories and tags
-    const categoryMap: Record<string, string> = {};
-    for (const categoryName of initialData.tagCategories) {
-      const category = await TagCategory.create({ name: categoryName });
-      categoryMap[categoryName] = category._id.toString();
-    }
-
-    for (const categoryName in initialData.tags) {
-      const categoryId = categoryMap[categoryName];
-      const tagNames = initialData.tags[categoryName as keyof typeof initialData.tags];
-
-      for (const tagName of tagNames) {
-        await Tag.create({ name: tagName, categoryId });
-      }
-    }
-
-    // Create modules, incidents, and actions per application
-    for (const appName in initialData.relations) {
-      const appId = appMap[appName];
-      if (!appId) continue;
-
-      const data = initialData.relations[appName] as any;
-
-      // Create modules and build a name->id map scoped to this application
-      const moduleMap: Record<string, string> = {};
-      for (const moduleName of data.modules) {
-        const mod = await Module.create({ name: moduleName, applicationId: appId });
-        moduleMap[moduleName] = mod._id.toString();
-      }
-
-      // Create incidents linked to modules via moduleIds array
-      const incidentMap: Record<string, string> = {};
-      for (const incidentName in data.incidents) {
-        const moduleNames: string[] = data.incidents[incidentName];
-        const moduleIds = moduleNames.map(name => {
-          const id = moduleMap[name];
-          if (!id) throw new Error(`Module "${name}" not found for incident "${incidentName}" in app "${appName}"`);
-          return id;
-        });
-        const incident = await Incident.create({ name: incidentName, moduleIds });
-        incidentMap[incidentName] = incident._id.toString();
-      }
-
-      // Create actions linked to incidents via incidentIds array
-      for (const actionName in data.actions) {
-        const incidentNames: string[] = data.actions[actionName];
-        const incidentIds = incidentNames.map(name => {
-          const id = incidentMap[name];
-          if (!id) throw new Error(`Incident "${name}" not found for action "${actionName}" in app "${appName}"`);
-          return id;
-        });
-        await Action.create({ name: actionName, incidentIds });
-      }
-    }
-
-    console.log('✓ Database seeded successfully');
+    await performSeed();
     await disconnectDB();
   } catch (error) {
     console.error('✗ Seed failed:', error);
@@ -99,4 +96,7 @@ const seed = async () => {
   }
 };
 
-seed();
+// Only run automatically if this script is executed directly
+if (process.argv[1] && process.argv[1].endsWith('seed.ts')) {
+  seed();
+}

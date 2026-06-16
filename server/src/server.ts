@@ -39,9 +39,16 @@ app.use('/api/closures', closuresRouter);
 
 app.use(errorHandler);
 
+import { performSeed } from './routes/seed.js';
+
 const startServer = async () => {
   try {
     await connectDB();
+    
+    if (process.env.USE_MEMORY_DB === 'true') {
+      await performSeed();
+    }
+    
     app.listen(PORT, () => {
       logger.info(`✓ Server running on http://localhost:${PORT}`);
     });

@@ -84,9 +84,9 @@ Ao modificar o código deste repositório, atente-se às seguintes convenções:
 ## 6. Comandos e Tarefas Úteis de Desenvolvimento
 
 ### Executando o Projeto
-- Para rodar via Docker: `docker-compose up --build`
-- Rodar o backend localmente: `cd server && npm run dev`
-- Rodar o frontend localmente: `cd client && npm run dev`
+- Para rodar em produção via Docker (sem montar volumes): `docker-compose up --build`
+- Rodar o backend localmente (dev com banco em memória mockado): `cd server && npm run dev:mock`
+- Rodar o frontend localmente (dev): `cd client && npm run dev`
 
 ### Verificação e Build local (TypeScript)
 Como por padrão a execução usa Docker, os pacotes locais `node_modules` podem não existir fora dos containers. Para testar a tipagem localmente no Windows:
