@@ -34,7 +34,7 @@ export default function Sidebar() {
 
   const navItemClass = (path: string) => {
     const isActive = location.pathname === path;
-    return `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+    return `text-sm flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
       isActive 
         ? 'bg-[var(--accent-primary-bg)] text-[var(--accent-primary)] font-medium shadow-sm' 
         : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]'
@@ -63,7 +63,7 @@ export default function Sidebar() {
       {/* Sidebar Container */}
       <aside 
         className={`fixed lg:sticky top-0 left-0 z-50 h-screen glass-surface border-r border-[var(--border-primary)] flex flex-col transition-all duration-300 ease-in-out ${
-          isExpanded ? 'w-64' : 'w-[4.5rem]'
+          isExpanded ? 'w-48' : 'w-[4.5rem]'
         } ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
@@ -149,7 +149,6 @@ export default function Sidebar() {
             {isExpanded && <span className="ml-3 whitespace-nowrap font-medium">Alterar Tema</span>}
           </button>
 
-          </button>
         </div>
 
       </aside>
