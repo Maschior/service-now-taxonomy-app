@@ -2,16 +2,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, ClipboardList, Shield, LayoutTemplate, 
   AlertTriangle, Wrench, Tags, Menu, X, 
-  ChevronLeft, ChevronRight, Sun, Moon 
+  ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useDarkMode } from '../hooks/useDarkMode';
-
 export default function Sidebar() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
-  const { theme, toggleTheme } = useDarkMode();
 
   // Close mobile menu on route change
   useEffect(() => {

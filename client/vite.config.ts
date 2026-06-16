@@ -17,7 +17,7 @@ export default defineConfig({
     }
   },
   preview: {
-    port: 5173,
+    port: 4173,
     host: '0.0.0.0',
     allowedHosts: true,
     proxy: {
