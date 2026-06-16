@@ -79,6 +79,9 @@ Ao modificar o código deste repositório, atente-se às seguintes convenções:
 3. **Validação de Inputs:**
    Toda nova rota que aceite payloads deve obrigatoriamente registrar um validator no `server/src/middleware/validation.ts` e encadear o middleware `validateRequest` para interceptar e formatar erros de validação da API.
 
+4. **Commits e Controle de Versão:**
+   Agentes de IA não devem realizar commits automaticamente ao concluir tarefas de implementação. Apenas realize o git commit quando expressamente solicitado pelo usuário.
+
 ---
 
 ## 6. Comandos e Tarefas Úteis de Desenvolvimento

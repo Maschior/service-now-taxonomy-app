@@ -28,10 +28,10 @@ function App() {
               <Route path="/manage/tags" element={<ThreeColumnLayout><ManageTags /></ThreeColumnLayout>} />
             </Routes>
           </main>
-          <footer className="py-3 mt-auto text-center text-[11px] text-[var(--text-muted)] flex justify-center items-center gap-2 opacity-30 hover:opacity-100 transition-opacity cursor-default">
-            <span>Autor: <strong className="font-semibold">Matheus Delmaschio</strong></span>
+          <footer className="py-3 mt-auto glass-surface w-full text-center text-[11px] text-[var(--text-secondary)] flex justify-center items-center gap-2 transition-opacity cursor-default" style={{ borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
+            <span>Autor: <strong className="font-semibold text-[var(--text-primary)]">Matheus Delmaschio</strong></span>
             <span className="w-1 h-1 rounded-full bg-[var(--text-muted)]"></span>
-            <span>Team: <strong className="font-semibold">Softtek</strong></span>
+            <span>Team: <strong className="font-semibold text-[var(--text-primary)]">Softtek</strong></span>
           </footer>
         </div>
       </div>

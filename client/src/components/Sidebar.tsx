@@ -129,28 +129,6 @@ export default function Sidebar() {
 
         </div>
 
-        {/* Footer Actions (Theme Toggle & Expand/Collapse) */}
-        <div className="border-t border-[var(--border-primary)] p-3 flex flex-col gap-2 flex-shrink-0">
-          <button
-            onClick={toggleTheme}
-            className={`flex items-center ${isExpanded ? 'justify-start px-3' : 'justify-center'} py-2.5 rounded-xl transition-all duration-200 hover:bg-[var(--bg-card-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]`}
-            title={!isExpanded ? "Alterar Tema" : undefined}
-          >
-            <div className="relative min-w-[20px] w-5 h-5 flex items-center justify-center">
-              <span className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out"
-                style={{ transform: theme === 'dark' ? 'rotate(90deg) scale(0)' : 'rotate(0) scale(1)', opacity: theme === 'dark' ? 0 : 1 }}>
-                <Sun size={20} />
-              </span>
-              <span className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out"
-                style={{ transform: theme === 'dark' ? 'rotate(0) scale(1)' : 'rotate(-90deg) scale(0)', opacity: theme === 'dark' ? 1 : 0 }}>
-                <Moon size={20} />
-              </span>
-            </div>
-            {isExpanded && <span className="ml-3 whitespace-nowrap font-medium">Alterar Tema</span>}
-          </button>
-
-        </div>
-
       </aside>
     </>
   );

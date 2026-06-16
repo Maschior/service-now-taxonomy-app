@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2 } from 'lucide-react';
+import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2, Sun, Moon } from 'lucide-react';
 import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, closureApi, handleApiError } from '../services/api';
 import { Application, Module, Incident, Action, Tag as TagType, TagCategory } from '../types/index';
 import { useDebounce } from '../hooks/useDebounce';
+import { useDarkMode } from '../hooks/useDarkMode';
 
 const CACHE_KEY = 'taxonomy-form-state';
 
@@ -42,6 +43,8 @@ const getId = (field: string | { _id: string }): string =>
 export default function TaxonomyForm() {
   // Load cached state on first render
   const [cached] = useState(() => loadCache());
+
+  const { theme, toggleTheme } = useDarkMode();
 
   const [previousState, setPreviousState] = useState<CachedState | null>(null);
   const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
@@ -677,6 +680,23 @@ export default function TaxonomyForm() {
             <button onClick={handleClearAll} className="btn-ghost text-xs px-3.5 py-2">
               Limpar Tudo
             </button>
+            <div className="w-px h-5 mx-1" style={{ background: 'var(--border-primary)' }} />
+            <button
+              onClick={toggleTheme}
+              className="flex items-center justify-center btn-ghost text-xs px-2 py-2"
+              title="Alterar Tema"
+            >
+              <div className="relative min-w-[14px] w-3.5 h-3.5 flex items-center justify-center">
+                <span className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out"
+                  style={{ transform: theme === 'dark' ? 'rotate(90deg) scale(0)' : 'rotate(0) scale(1)', opacity: theme === 'dark' ? 0 : 1 }}>
+                  <Sun size={14} />
+                </span>
+                <span className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out"
+                  style={{ transform: theme === 'dark' ? 'rotate(0) scale(1)' : 'rotate(-90deg) scale(0)', opacity: theme === 'dark' ? 1 : 0 }}>
+                  <Moon size={14} />
+                </span>
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -754,7 +774,7 @@ export default function TaxonomyForm() {
                   <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Tags {selectedTags.length > 0 && <span style={{ color: 'var(--accent-secondary)' }}>({selectedTags.length})</span>}
                   </label>
-                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[120px] p-1 min-h-[28px]">
+                  <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[400px] p-1 min-h-[28px]">
                     {visibleTags.length > 0 ? (
                       visibleTags.map(tag => (
                         <button
