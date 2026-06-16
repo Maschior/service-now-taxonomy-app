@@ -589,8 +589,9 @@ export default function TaxonomyForm() {
     <div className="animate-fade-in-up">
       {/* Modal Confirmação de Limpeza */}
       {isConfirmClearModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="glass-surface p-6 rounded-2xl w-full max-w-md animate-fade-in-up" style={{ background: 'var(--bg-card)' }}>
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="p-6 rounded-2xl w-full max-w-md animate-fade-in-up border shadow-2xl" 
+               style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-secondary)' }}>
             <h3 className="text-lg font-bold mb-2">Atenção</h3>
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
               Deseja registrar o fechamento antes de limpar os campos?

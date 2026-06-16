@@ -68,6 +68,16 @@ export default function Sidebar() {
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
+        {/* Desktop Only: Floating Collapse/Expand Button */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full items-center justify-center shadow-md transition-all duration-200 z-50 hover:scale-110"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', color: 'var(--text-primary)' }}
+          title={isExpanded ? "Recolher Sidebar" : "Expandir Sidebar"}
+        >
+          {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+        </button>
+
         {/* Header & Logo */}
         <div className="flex items-center justify-between px-4 h-16 border-b border-[var(--border-primary)] flex-shrink-0">
           <Link to="/" className={`flex items-center gap-3 overflow-hidden ${!isExpanded ? 'justify-center w-full' : ''}`}>
@@ -139,19 +149,6 @@ export default function Sidebar() {
             {isExpanded && <span className="ml-3 whitespace-nowrap font-medium">Alterar Tema</span>}
           </button>
 
-          {/* Desktop Only: Collapse/Expand */}
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={`hidden lg:flex items-center ${isExpanded ? 'justify-start px-3' : 'justify-center'} py-2.5 rounded-xl transition-all duration-200 hover:bg-[var(--bg-card-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
-          >
-            {isExpanded ? (
-              <>
-                <ChevronLeft size={20} className="min-w-[20px]" />
-                <span className="ml-3 whitespace-nowrap font-medium">Recolher</span>
-              </>
-            ) : (
-              <ChevronRight size={20} className="min-w-[20px]" />
-            )}
           </button>
         </div>
 
