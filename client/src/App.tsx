@@ -15,8 +15,8 @@ function App() {
     <Router>
       <div className="flex min-h-screen">
         <Sidebar />
-        <main className="flex-1 w-full px-4 md:px-8 py-6 min-w-0 flex flex-col">
-          <div className="flex-1">
+        <div className="flex-1 w-full min-w-0 flex flex-col">
+          <main className="flex-1 w-full px-4 md:px-8 py-6">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/closures" element={<ThreeColumnLayout><ClosuresPage /></ThreeColumnLayout>} />
@@ -27,13 +27,13 @@ function App() {
               <Route path="/manage/actions" element={<ThreeColumnLayout><ManageActions /></ThreeColumnLayout>} />
               <Route path="/manage/tags" element={<ThreeColumnLayout><ManageTags /></ThreeColumnLayout>} />
             </Routes>
-          </div>
-          <footer className="pt-8 pb-2 text-center text-xs font-medium text-[var(--text-muted)] flex justify-center items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
-            <span>Autor: <strong style={{ color: 'var(--text-secondary)' }}>Matheus Delmaschio</strong></span>
-            <span className="w-1 h-1 rounded-full bg-[var(--border-secondary)]"></span>
-            <span>Team: <strong style={{ color: 'var(--text-secondary)' }}>Softtek</strong></span>
+          </main>
+          <footer className="py-3 mt-auto text-center text-[11px] text-[var(--text-muted)] flex justify-center items-center gap-2 opacity-30 hover:opacity-100 transition-opacity cursor-default">
+            <span>Autor: <strong className="font-semibold">Matheus Delmaschio</strong></span>
+            <span className="w-1 h-1 rounded-full bg-[var(--text-muted)]"></span>
+            <span>Team: <strong className="font-semibold">Softtek</strong></span>
           </footer>
-        </main>
+        </div>
       </div>
     </Router>
   );
