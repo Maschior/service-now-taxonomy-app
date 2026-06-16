@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search } from 'lucide-react';
+import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2 } from 'lucide-react';
 import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, closureApi, handleApiError } from '../services/api';
 import { Application, Module, Incident, Action, Tag as TagType, TagCategory } from '../types/index';
 import { useDebounce } from '../hooks/useDebounce';
@@ -42,6 +42,9 @@ const getId = (field: string | { _id: string }): string =>
 export default function TaxonomyForm() {
   // Load cached state on first render
   const [cached] = useState(() => loadCache());
+
+  const [previousState, setPreviousState] = useState<CachedState | null>(null);
+  const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
 
   // Search states
   const [appSearch, setAppSearch] = useState('');
@@ -486,17 +489,7 @@ export default function TaxonomyForm() {
   };
 
   const handleClearAll = () => {
-    if (!window.confirm('Tem certeza que deseja limpar todos os campos?')) return;
-    setSelectedApp('');
-    setSelectedModule('');
-    setSelectedIncident('');
-    setSelectedAction('');
-    setSelectedTags([]);
-    setActiveCategories([]);
-    setMotivo('');
-    setAnalise('');
-    setSolucao('');
-    clearCache();
+    setIsConfirmClearModalOpen(true);
   };
 
   const isFormIncomplete = useMemo(() => {
@@ -540,6 +533,45 @@ export default function TaxonomyForm() {
     }
   }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete]);
 
+  const executeClearAll = async (withSave: boolean) => {
+    if (withSave) {
+      if (isFormIncomplete) return;
+      await handleRegisterClosure();
+    }
+    
+    setPreviousState({
+      selectedApp, selectedModule, selectedIncident, selectedAction,
+      activeCategories, selectedTags,
+      motivo, analise, solucao
+    });
+    
+    setSelectedApp('');
+    setSelectedModule('');
+    setSelectedIncident('');
+    setSelectedAction('');
+    setSelectedTags([]);
+    setActiveCategories([]);
+    setMotivo('');
+    setAnalise('');
+    setSolucao('');
+    clearCache();
+    setIsConfirmClearModalOpen(false);
+  };
+
+  const handleUndo = () => {
+    if (!previousState) return;
+    setSelectedApp(previousState.selectedApp);
+    setSelectedModule(previousState.selectedModule);
+    setSelectedIncident(previousState.selectedIncident);
+    setSelectedAction(previousState.selectedAction);
+    setActiveCategories(previousState.activeCategories);
+    setSelectedTags(previousState.selectedTags);
+    setMotivo(previousState.motivo);
+    setAnalise(previousState.analise);
+    setSolucao(previousState.solucao);
+    setPreviousState(null);
+  };
+
   // ──────────────────── RENDER ────────────────────
 
   if (loading) {
@@ -555,6 +587,40 @@ export default function TaxonomyForm() {
 
   return (
     <div className="animate-fade-in-up">
+      {/* Modal Confirmação de Limpeza */}
+      {isConfirmClearModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="glass-surface p-6 rounded-2xl w-full max-w-md animate-fade-in-up" style={{ background: 'var(--bg-card)' }}>
+            <h3 className="text-lg font-bold mb-2">Atenção</h3>
+            <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+              Deseja registrar o fechamento antes de limpar os campos?
+            </p>
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
+              <button 
+                onClick={() => setIsConfirmClearModalOpen(false)}
+                className="btn-ghost text-sm px-4 py-2"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => executeClearAll(false)}
+                className="btn-ghost text-sm px-4 py-2 text-red-500 hover:bg-red-500/10 hover:text-red-600 hover:border-red-200"
+              >
+                Apenas Limpar
+              </button>
+              <button 
+                onClick={() => executeClearAll(true)}
+                disabled={isFormIncomplete || savingClosure}
+                className="btn-primary text-sm px-4 py-2"
+                style={{ opacity: (isFormIncomplete || savingClosure) ? 0.5 : 1, cursor: (isFormIncomplete || savingClosure) ? 'not-allowed' : 'pointer' }}
+              >
+                {savingClosure ? 'Salvando...' : 'Registrar e Limpar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-5">
@@ -602,6 +668,11 @@ export default function TaxonomyForm() {
               {closureSaved ? <Check size={14} /> : <Save size={14} />}
               <span>{closureSaved ? 'Registrado!' : savingClosure ? 'Salvando...' : 'Registrar Fechamento'}</span>
             </button>
+            {previousState && (
+              <button onClick={handleUndo} className="flex items-center justify-center btn-ghost text-xs px-2 py-2" title="Desfazer Limpeza">
+                <Undo2 size={14} />
+              </button>
+            )}
             <button onClick={handleClearAll} className="btn-ghost text-xs px-3.5 py-2">
               Limpar Tudo
             </button>

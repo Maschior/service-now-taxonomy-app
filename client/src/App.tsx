@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import HomePage from './pages/HomePage';
 import AdminDashboard from './pages/AdminDashboard';
 import ClosuresPage from './pages/ClosuresPage';
@@ -13,19 +13,21 @@ import ThreeColumnLayout from './components/ThreeColumnLayout';
 function App() {
   return (
     <Router>
-      <Navbar />
-      <main className="w-full px-4 md:px-8 py-6">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/closures" element={<ThreeColumnLayout><ClosuresPage /></ThreeColumnLayout>} />
-          <Route path="/admin" element={<ThreeColumnLayout><AdminDashboard /></ThreeColumnLayout>} />
-          <Route path="/manage/applications" element={<ThreeColumnLayout><ManageApplications /></ThreeColumnLayout>} />
-          <Route path="/manage/modules" element={<ThreeColumnLayout><ManageModules /></ThreeColumnLayout>} />
-          <Route path="/manage/incidents" element={<ThreeColumnLayout><ManageIncidents /></ThreeColumnLayout>} />
-          <Route path="/manage/actions" element={<ThreeColumnLayout><ManageActions /></ThreeColumnLayout>} />
-          <Route path="/manage/tags" element={<ThreeColumnLayout><ManageTags /></ThreeColumnLayout>} />
-        </Routes>
-      </main>
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1 w-full px-4 md:px-8 py-6 min-w-0">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/closures" element={<ThreeColumnLayout><ClosuresPage /></ThreeColumnLayout>} />
+            <Route path="/admin" element={<ThreeColumnLayout><AdminDashboard /></ThreeColumnLayout>} />
+            <Route path="/manage/applications" element={<ThreeColumnLayout><ManageApplications /></ThreeColumnLayout>} />
+            <Route path="/manage/modules" element={<ThreeColumnLayout><ManageModules /></ThreeColumnLayout>} />
+            <Route path="/manage/incidents" element={<ThreeColumnLayout><ManageIncidents /></ThreeColumnLayout>} />
+            <Route path="/manage/actions" element={<ThreeColumnLayout><ManageActions /></ThreeColumnLayout>} />
+            <Route path="/manage/tags" element={<ThreeColumnLayout><ManageTags /></ThreeColumnLayout>} />
+          </Routes>
+        </main>
+      </div>
     </Router>
   );
 }
