@@ -25,7 +25,7 @@ export const requireWorkspace = async (req: WorkspaceRequest, res: Response, nex
     // If request contains workspace ID, validate it belongs to user
     // (If not provided, we can default to global or throw error depending on strictness.
     // For now, if no workspace is provided, user only accesses Global)
-    if (workspaceId) {
+    if (workspaceId && /^[0-9a-fA-F]{24}$/.test(workspaceId)) {
       req.currentWorkspaceId = workspaceId;
       req.accessibleWorkspaceIds = Array.from(new Set([req.globalWorkspaceId, req.currentWorkspaceId])).filter(Boolean) as string[];
     } else {

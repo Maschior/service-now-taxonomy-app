@@ -13,11 +13,12 @@ import tagsRouter from './routes/tags.js';
 import importRouter from './routes/import.js';
 import closuresRouter from './routes/closures.js';
 import authRouter from './routes/auth.js';
+import usersRouter from './routes/users.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
@@ -38,6 +39,7 @@ app.use('/api/tags', tagsRouter);
 app.use('/api/import', importRouter);
 app.use('/api/closures', closuresRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
 
 app.use(errorHandler);
 

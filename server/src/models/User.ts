@@ -4,6 +4,7 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   name: string;
+  photoUrl: string;
   role: 'ADMIN' | 'USER';
   workspaces: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -15,6 +16,7 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     name: { type: String, required: true, trim: true },
+    photoUrl: { type: String, default: '' },
     role: { type: String, enum: ['ADMIN', 'USER'], default: 'USER' },
     workspaces: [{ type: Schema.Types.ObjectId, ref: 'Workspace' }]
   },

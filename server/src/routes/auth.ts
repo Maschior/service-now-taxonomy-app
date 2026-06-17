@@ -15,11 +15,12 @@ router.post(
   [
     body('email').isEmail().withMessage('Valid email is required'),
     body('password').notEmpty().withMessage('Password is required'),
+    body('rememberMe').optional().isBoolean(),
     validateRequest
   ],
   async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, rememberMe } = req.body;
       const user = await User.findOne({ email }).populate('workspaces');
       if (!user) {
         return res.status(401).json({ error: 'Invalid credentials' });
@@ -33,7 +34,7 @@ router.post(
       const token = jwt.sign(
         { id: user._id, role: user.role },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: rememberMe ? '30d' : '24h' }
       );
 
       res.json({

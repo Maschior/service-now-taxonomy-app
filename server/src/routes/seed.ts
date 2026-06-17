@@ -39,6 +39,13 @@ export const performSeed = async () => {
     isActive: true
   });
 
+  console.log('Creating Default Workspace...');
+  const defaultWorkspace = await Workspace.create({
+    name: 'Default (Local)',
+    isGlobal: false,
+    isActive: true
+  });
+
   console.log('Creating Admin User...');
   const passwordHash = await bcrypt.hash('admin123', 10);
   await User.create({
@@ -46,19 +53,29 @@ export const performSeed = async () => {
     email: 'admin@taxonomy.local',
     passwordHash,
     role: 'ADMIN',
-    workspaces: [globalWorkspace._id]
+    workspaces: [globalWorkspace._id, defaultWorkspace._id]
+  });
+
+  console.log('Creating Test User...');
+  const userPasswordHash = await bcrypt.hash('user123', 10);
+  await User.create({
+    name: 'Test User',
+    email: 'user@taxonomy.local',
+    passwordHash: userPasswordHash,
+    role: 'USER',
+    workspaces: [defaultWorkspace._id]
   });
 
 
   const appMap: Record<string, string> = {};
   for (const appName of initialData.applications) {
-    const app = await Application.create({ name: appName });
+    const app = await Application.create({ name: appName, workspaceId: globalWorkspace._id });
     appMap[appName] = app._id.toString();
   }
 
   const categoryMap: Record<string, string> = {};
   for (const categoryName of initialData.tagCategories) {
-    const category = await TagCategory.create({ name: categoryName });
+    const category = await TagCategory.create({ name: categoryName, workspaceId: globalWorkspace._id });
     categoryMap[categoryName] = category._id.toString();
   }
 
@@ -67,7 +84,7 @@ export const performSeed = async () => {
     const tagNames = initialData.tags[categoryName as keyof typeof initialData.tags];
 
     for (const tagName of tagNames) {
-      await Tag.create({ name: tagName, categoryId });
+      await Tag.create({ name: tagName, categoryId, workspaceId: globalWorkspace._id });
     }
   }
 
@@ -79,7 +96,7 @@ export const performSeed = async () => {
 
     const moduleMap: Record<string, string> = {};
     for (const moduleName of data.modules) {
-      const mod = await Module.create({ name: moduleName, applicationId: appId });
+      const mod = await Module.create({ name: moduleName, applicationId: appId, workspaceId: globalWorkspace._id });
       moduleMap[moduleName] = mod._id.toString();
     }
 
@@ -91,7 +108,7 @@ export const performSeed = async () => {
         if (!id) throw new Error(`Module "${name}" not found for incident "${incidentName}" in app "${appName}"`);
         return id;
       });
-      const incident = await Incident.create({ name: incidentName, moduleIds });
+      const incident = await Incident.create({ name: incidentName, moduleIds, workspaceId: globalWorkspace._id });
       incidentMap[incidentName] = incident._id.toString();
     }
 
@@ -102,7 +119,7 @@ export const performSeed = async () => {
         if (!id) throw new Error(`Incident "${name}" not found for action "${actionName}" in app "${appName}"`);
         return id;
       });
-      await Action.create({ name: actionName, incidentIds });
+      await Action.create({ name: actionName, incidentIds, workspaceId: globalWorkspace._id });
     }
   }
   console.log('✓ Database seeded successfully');

@@ -89,6 +89,16 @@ export const closureApi = {
   delete: (id: string) => api.delete(`/closures/${id}`)
 };
 
+export const userApi = {
+  getMe: () => api.get<any>('/users/me'),
+  updateProfile: (data: { name: string; email: string; photoUrl?: string }) => api.put<any>('/users/me', data),
+  updatePassword: (data: { currentPassword: string; newPassword: string }) => api.put<{message: string}>('/users/me/password', data),
+  getAll: () => api.get<any[]>('/users'),
+  create: (data: any) => api.post<any>('/users', data),
+  update: (id: string, data: any) => api.put<any>(`/users/${id}`, data),
+  delete: (id: string) => api.delete(`/users/${id}`)
+};
+
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.data?.error) {

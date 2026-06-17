@@ -46,6 +46,7 @@ export interface TagCategory {
   name: string;
   workspaceId: string;
   isActive: boolean;
+  isGlobal?: boolean;
   description?: string;
   createdAt: string;
 }
@@ -56,6 +57,7 @@ export interface Tag {
   categoryId: string | TagCategory;
   workspaceId: string;
   isActive: boolean;
+  isGlobal?: boolean;
   description?: string;
   createdAt: string;
 }

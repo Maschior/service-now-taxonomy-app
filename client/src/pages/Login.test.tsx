@@ -45,7 +45,7 @@ describe('Login Component', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
-      expect(authApi.login).toHaveBeenCalledWith('admin@taxonomy.local', 'admin123');
+      expect(authApi.login).toHaveBeenCalledWith('admin@taxonomy.local', 'admin123', false);
     });
   });
 

@@ -1,6 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 const TestComponent = () => {
   const { user, token, currentWorkspaceId, login, logout, setCurrentWorkspaceId } = useAuth();
@@ -12,7 +12,7 @@ const TestComponent = () => {
       <div data-testid="workspace">{currentWorkspaceId || 'No Workspace'}</div>
       <button 
         data-testid="login-btn" 
-        onClick={() => login({ id: '1', name: 'Test User', email: 'test@test.com', role: 'USER', workspaces: ['ws1', 'ws2'] }, 'fake-token')}
+        onClick={() => login({ id: '1', name: 'Test User', email: 'test@test.com', role: 'USER', workspaces: [{_id: 'ws1', name: 'WS1', isGlobal: false}, {_id: 'ws2', name: 'WS2', isGlobal: false}] }, 'fake-token')}
       >
         Login
       </button>
