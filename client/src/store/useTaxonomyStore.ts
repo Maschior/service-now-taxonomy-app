@@ -36,7 +36,7 @@ interface TaxonomyStore {
   // Updating active tab data
   updateActiveTab: (updater: Partial<TaxonomyFormData> | ((prev: TaxonomyFormData) => Partial<TaxonomyFormData>)) => void;
   markActiveTabAsSaved: () => void;
-  updateActiveTabTitle: (title: string) => void;
+  updateTabTitle: (id: string, title: string) => void;
 }
 
 const initialFormData: TaxonomyFormData = {
@@ -60,7 +60,7 @@ const createNewTab = (title: string = 'Novo Chamado'): Tab => ({
 
 export const useTaxonomyStore = create<TaxonomyStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       tabs: [],
       activeTabId: null,
 
@@ -161,11 +161,10 @@ export const useTaxonomyStore = create<TaxonomyStore>()(
         });
       },
 
-      updateActiveTabTitle: (title) => {
+      updateTabTitle: (id, title) => {
         set((state) => {
-          if (!state.activeTabId) return state;
           const newTabs = state.tabs.map((t) =>
-            t.id === state.activeTabId ? { ...t, title } : t
+            t.id === id ? { ...t, title } : t
           );
           return { tabs: newTabs };
         });

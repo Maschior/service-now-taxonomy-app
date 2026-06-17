@@ -32,7 +32,7 @@ export default function TaxonomyForm() {
   const debouncedActionSearch = useDebounce(actionSearch, 300);
 
   // Tab State
-  const { tabs, activeTabId, updateActiveTab, updateActiveTabTitle, markActiveTabAsSaved, removeTab, addTab, setActiveTab } = useTaxonomyStore();
+  const { tabs, activeTabId, updateActiveTab, markActiveTabAsSaved, removeTab, addTab, setActiveTab } = useTaxonomyStore();
   const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
   const formData = activeTab?.data || {
     selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '',
@@ -356,13 +356,7 @@ export default function TaxonomyForm() {
     return parts.filter(Boolean).join(':');
   }, [selectedApp, selectedModule, selectedIncident, selectedAction, applications, allModules, allIncidents, allActions]);
 
-  useEffect(() => {
-    if (!activeTabId) return;
-    const newTitle = shortDescription || 'Novo Chamado';
-    if (activeTab?.title !== newTitle) {
-      updateActiveTabTitle(newTitle);
-    }
-  }, [shortDescription, activeTabId, activeTab?.title, updateActiveTabTitle]);
+
 
   const selectedTagNames = useMemo(() =>
     selectedTags.map(id => tags.find(t => t._id === id)?.name).filter(Boolean) as string[],

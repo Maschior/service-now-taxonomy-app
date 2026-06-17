@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 export default function Sidebar() {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
 

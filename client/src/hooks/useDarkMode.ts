@@ -5,11 +5,11 @@ export type Theme = 'light' | 'dark';
 export function useDarkMode() {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('theme') as Theme;
+      const saved = localStorage.getItem('theme');
       if (saved === 'light' || saved === 'dark') return saved;
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-    return 'dark';
+    return 'light';
   });
 
   useEffect(() => {
@@ -21,12 +21,12 @@ export function useDarkMode() {
       root.classList.remove('dark');
       root.style.colorScheme = 'light';
     }
-    localStorage.setItem('theme', theme);
   }, [theme]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => {
+      // Only auto-update if user hasn't explicitly set a preference
       if (!localStorage.getItem('theme')) {
         setTheme(e.matches ? 'dark' : 'light');
       }
@@ -35,7 +35,13 @@ export function useDarkMode() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  const toggleTheme = () => {
+    setTheme(prev => {
+      const newTheme = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', newTheme);
+      return newTheme;
+    });
+  };
 
   return { theme, toggleTheme };
 }

@@ -5,11 +5,13 @@ import { useEffect, useState, useRef } from 'react';
 export default function TabBar() {
   const { 
     tabs, activeTabId, addTab, removeTab, setActiveTab, 
-    closeAllOtherTabs, closeTabsToLeft, closeTabsToRight, clearAllTabs
+    closeAllOtherTabs, closeTabsToLeft, closeTabsToRight, clearAllTabs, updateTabTitle
   } = useTaxonomyStore();
 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editTitleValue, setEditTitleValue] = useState('');
 
   // If there are no tabs, create the first one automatically
   useEffect(() => {
@@ -72,13 +74,39 @@ export default function TabBar() {
             }}
           >
             <AlignLeft size={14} style={{ color: tab.isSaved ? 'var(--success-color)' : 'var(--text-muted)' }} />
-            <span 
-              className="text-sm font-medium truncate flex-1" 
-              style={{ color: activeTabId === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)' }}
-              title={tab.title}
-            >
-              {tab.title}
-            </span>
+            {editingTabId === tab.id ? (
+              <input
+                autoFocus
+                value={editTitleValue}
+                onChange={(e) => setEditTitleValue(e.target.value)}
+                onBlur={() => {
+                  updateTabTitle(tab.id, editTitleValue.trim() || 'Novo Chamado');
+                  setEditingTabId(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    updateTabTitle(tab.id, editTitleValue.trim() || 'Novo Chamado');
+                    setEditingTabId(null);
+                  } else if (e.key === 'Escape') {
+                    setEditingTabId(null);
+                  }
+                }}
+                className="text-sm font-medium flex-1 outline-none bg-transparent min-w-[50px] max-w-full"
+                style={{ color: 'var(--text-primary)' }}
+              />
+            ) : (
+              <span 
+                onDoubleClick={() => {
+                  setEditingTabId(tab.id);
+                  setEditTitleValue(tab.title);
+                }}
+                className="text-sm font-medium truncate flex-1" 
+                style={{ color: activeTabId === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+                title={tab.title}
+              >
+                {tab.title}
+              </span>
+            )}
             <button
               onClick={(e) => handleCloseTab(tab.id, e)}
               className="p-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-500"
@@ -103,11 +131,11 @@ export default function TabBar() {
       {contextMenu && (
         <div 
           ref={contextMenuRef}
-          className="fixed z-[9999] py-1 rounded-lg shadow-xl border text-sm animate-fade-in"
+          className="fixed z-[9999] py-1 rounded-lg shadow-xl border text-sm animate-fade-in w-auto whitespace-nowrap min-w-[150px]"
           style={{ 
             background: 'var(--bg-card)', 
             borderColor: 'var(--border-secondary)',
-            left: Math.min(contextMenu.x, window.innerWidth - 200), // Prevent overflow right
+            left: Math.min(contextMenu.x, window.innerWidth - 250),
             top: contextMenu.y 
           }}
         >
