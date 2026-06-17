@@ -7,11 +7,12 @@ A full-stack web application for managing ServiceNow incident taxonomy and class
 - **Taxonomy Classification**: Hierarchical classification using Applications, Modules, Incidents, and Actions.
 - **Standardized Outputs**: Automatically generates copyable *Short Descriptions* (`Application:Module:Local Support:Incident:Action`) and *Resolution Notes*.
 - **Ticket Closure Registration**: Save classification records directly to the database (including Short Description, Resolution Notes, taxonomy references, and custom notes).
-- **Interactive High-Density UI**: Fully responsive interface using custom Vanilla CSS with vibrant color palettes, glassmorphism effects, dark mode aesthetics, and a clean sidebar layout.
+- **Interactive High-Density UI**: Fully responsive interface using custom Vanilla CSS with vibrant color palettes, glassmorphism effects, dark mode aesthetics, a clean sidebar layout, and a global Chrome-like navbar.
 - **State Persistence (localStorage)**: Form selections and inputs (Motivo, Análise, Solução, selected tags, hierarchy) are cached instantly on input and restored on page reload.
 - **Clear Confirmation**: Prevents accidental data loss by prompting a confirmation dialog before clearing fields.
 - **Frontend Module Deduplication**: Groups modules with identical names across different applications on the UI while maintaining strict 1:N relations in MongoDB to avoid incident leakage.
 - **Type Safety**: Fully typed codebase using TypeScript across both backend and frontend.
+- **Testing**: Includes Unit and Component tests utilizing Vitest and React Testing Library.
 - **REST API**: Built with Node.js/Express, MongoDB/Mongoose, and input validation using `express-validator`.
 
 ---

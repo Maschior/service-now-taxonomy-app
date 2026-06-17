@@ -32,6 +32,7 @@ A aplicação segue uma arquitetura cliente-servidor padrão com persistência e
 - **Estilização:** CSS Vanilla estruturado (`index.css`) para controle total de design e evitar overhead de frameworks CSS, usando variáveis de cor sofisticadas para modo escuro/claro e efeitos modernos.
 - **Comunicação API:** Axios para requisições HTTP mapeadas em serviços tipados (`/src/services/api.ts`).
 - **Icons:** Lucide React.
+- **Testes:** Vitest + React Testing Library para testes unitários e de componentes.
 
 ### 2.3. Execução via Containers (`Docker`)
 - O projeto conta com um ambiente pré-configurado via `docker-compose.yml`, que sobe a aplicação inteira (Frontend, Backend e banco MongoDB) em rede isolada com volumes montados para desenvolvimento quente.
@@ -39,6 +40,10 @@ A aplicação segue uma arquitetura cliente-servidor padrão com persistência e
 ---
 
 ## 3. Modelagem de Dados & Decisões Críticas de Design
+
+### 3.0. Software Design Document (SDD) de Workspaces
+**ATENÇÃO:** O sistema utiliza uma arquitetura de múltiplos locatários (Workspaces) com herança Global. Todas as decisões inegociáveis sobre validações de unicidade, permissões de edição, isolamento de cache no frontend e soft delete em cascata estão estritamente documentadas no arquivo [WORKSPACE_SDD.md](.agents/WORKSPACE_SDD.md). Consulte-o antes de modificar lógicas de negócio, banco ou rotas.
+
 
 ### 3.1. Relação Application ──> Module (1:N) com Agrupamento no Frontend
 Uma decisão crucial de arquitetura de banco foi manter a relação entre `Application` e `Module` como **1:N** (um módulo possui apenas uma `applicationId`). 
@@ -59,7 +64,7 @@ Para registrar os chamados fechados usando a taxonomia, foi criada a collection 
 
 - **Persistência de Estado (localStorage):** Para evitar perda de dados por recarregamento acidental da página, todos os campos preenchidos e seleções (App, Module, Incident, Action, Tags, Motivo, Análise, Solução) são persistidos no `localStorage` a cada alteração. No carregamento inicial, o estado do formulário é restaurado a partir do cache.
 - **Confirmação de Limpeza:** O botão "Limpar Tudo" exige confirmação explícita (`window.confirm`) do usuário para prevenir a perda de dados acidental, limpando tanto os estados do React quanto o cache no `localStorage`.
-- **Organização Visual:** As tags e as caixas de output foram deslocadas para uma barra lateral à esquerda, abrindo espaço para a exibição de chips confortáveis para Applications, Modules, Incidents e Actions na área central.
+- **Organização Visual:** Uma TabBar estilo Chrome-navbar global e navegação lateral estruturam o layout. As tags e as caixas de output foram deslocadas para uma barra lateral à esquerda, abrindo espaço para a exibição de chips confortáveis na área central.
 - **Registro de Fechamentos:** Um botão "Registrar Fechamento" no cabeçalho permite salvar a classificação no banco de dados, retornando feedback visual instantâneo de sucesso (ou erro).
 
 ---
@@ -90,6 +95,7 @@ Ao modificar o código deste repositório, atente-se às seguintes convenções:
 - Para rodar em produção via Docker (sem montar volumes): `docker-compose up --build`
 - Rodar o backend localmente (dev com banco em memória mockado): `cd server && npm run dev:mock`
 - Rodar o frontend localmente (dev): `cd client && npm run dev`
+- Rodar testes no frontend: `cd client && npm run test`
 
 ### Verificação e Build local (TypeScript)
 Como por padrão a execução usa Docker, os pacotes locais `node_modules` podem não existir fora dos containers. Para testar a tipagem localmente no Windows:
