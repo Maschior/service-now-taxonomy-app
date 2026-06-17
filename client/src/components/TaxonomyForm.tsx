@@ -5,7 +5,7 @@ import { useDebounce } from '../hooks/useDebounce';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useTaxonomyData } from '../hooks/useTaxonomyData';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
-import TabBar from './TabBar';
+
 
 /** Utility to extract ID from a potentially populated field */
 const getId = (field: string | { _id: string }): string =>
