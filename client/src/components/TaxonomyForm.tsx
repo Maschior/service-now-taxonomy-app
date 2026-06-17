@@ -1,52 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2, Sun, Moon } from 'lucide-react';
-import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, closureApi, handleApiError } from '../services/api';
-import { Application, Module, Incident, Action, Tag as TagType, TagCategory } from '../types/index';
+import { closureApi, handleApiError } from '../services/api';
 import { useDebounce } from '../hooks/useDebounce';
 import { useDarkMode } from '../hooks/useDarkMode';
-
-const CACHE_KEY = 'taxonomy-form-state';
-
-interface CachedState {
-  selectedApp: string;
-  selectedModule: string;
-  selectedIncident: string;
-  selectedAction: string;
-  activeCategories: string[];
-  selectedTags: string[];
-  motivo: string;
-  analise: string;
-  solucao: string;
-}
-
-const loadCache = (): Partial<CachedState> => {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
-};
-
-const saveCache = (state: CachedState) => {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(state));
-  } catch { /* ignore quota errors */ }
-};
-
-const clearCache = () => {
-  try { localStorage.removeItem(CACHE_KEY); } catch {}
-};
+import { useTaxonomyData } from '../hooks/useTaxonomyData';
+import { useTaxonomyStore } from '../store/useTaxonomyStore';
+import TabBar from './TabBar';
 
 /** Utility to extract ID from a potentially populated field */
 const getId = (field: string | { _id: string }): string =>
   typeof field === 'object' && field !== null ? field._id : field;
 
 export default function TaxonomyForm() {
-  // Load cached state on first render
-  const [cached] = useState(() => loadCache());
 
   const { theme, toggleTheme } = useDarkMode();
 
-  const [previousState, setPreviousState] = useState<CachedState | null>(null);
+  const [previousState, setPreviousState] = useState<any>(null);
   const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
 
   // Search states
@@ -62,20 +31,18 @@ export default function TaxonomyForm() {
   const [actionSearch, setActionSearch] = useState('');
   const debouncedActionSearch = useDebounce(actionSearch, 300);
 
-  // Selected IDs
-  const [selectedApp, setSelectedApp] = useState(cached.selectedApp || '');
-  const [selectedModule, setSelectedModule] = useState(cached.selectedModule || '');
-  const [selectedIncident, setSelectedIncident] = useState(cached.selectedIncident || '');
-  const [selectedAction, setSelectedAction] = useState(cached.selectedAction || '');
+  // Tab State
+  const { tabs, activeTabId, updateActiveTab, updateActiveTabTitle, markActiveTabAsSaved } = useTaxonomyStore();
+  const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
+  const formData = activeTab?.data || {
+    selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '',
+    activeCategories: [], selectedTags: [], motivo: '', analise: '', solucao: ''
+  };
 
-  // Tags
-  const [activeCategories, setActiveCategories] = useState<string[]>(cached.activeCategories || []);
-  const [selectedTags, setSelectedTags] = useState<string[]>(cached.selectedTags || []);
-
-  // Text fields
-  const [motivo, setMotivo] = useState(cached.motivo || '');
-  const [analise, setAnalise] = useState(cached.analise || '');
-  const [solucao, setSolucao] = useState(cached.solucao || '');
+  const {
+    selectedApp, selectedModule, selectedIncident, selectedAction,
+    activeCategories, selectedTags, motivo, analise, solucao
+  } = formData;
 
   // Copy states
   const [copiedStates, setCopiedStates] = useState({ short: false, resolution: false });
@@ -84,57 +51,8 @@ export default function TaxonomyForm() {
   const [savingClosure, setSavingClosure] = useState(false);
   const [closureSaved, setClosureSaved] = useState(false);
 
-  // ──────────────────── CACHE SYNC ────────────────────
-
-  useEffect(() => {
-    saveCache({
-      selectedApp, selectedModule, selectedIncident, selectedAction,
-      activeCategories, selectedTags,
-      motivo, analise, solucao
-    });
-  }, [selectedApp, selectedModule, selectedIncident, selectedAction, activeCategories, selectedTags, motivo, analise, solucao]);
-
   // Data from API
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [allModules, setAllModules] = useState<Module[]>([]);
-  const [allIncidents, setAllIncidents] = useState<Incident[]>([]);
-  const [allActions, setAllActions] = useState<Action[]>([]);
-  const [tags, setTags] = useState<TagType[]>([]);
-  const [tagCategories, setTagCategories] = useState<TagCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // ──────────────────── DATA FETCHING ────────────────────
-
-  useEffect(() => {
-    fetchAllData();
-  }, []);
-
-  const fetchAllData = async () => {
-    try {
-      setLoading(true);
-      const [appsRes, modsRes, incsRes, actsRes, categoriesRes, tagsRes] = await Promise.all([
-        applicationApi.getAll(),
-        moduleApi.getAll(),
-        incidentApi.getAll({}),
-        actionApi.getAll({}),
-        tagApi.getCategories(),
-        tagApi.getAll(),
-      ]);
-
-      setApplications(appsRes.data);
-      setAllModules(modsRes.data);
-      setAllIncidents(incsRes.data);
-      setAllActions(actsRes.data);
-      setTagCategories(categoriesRes.data);
-      setTags(tagsRes.data);
-      setError(null);
-    } catch (err) {
-      setError(handleApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { applications, allModules, allIncidents, allActions, tags, tagCategories, loading, error, setError } = useTaxonomyData();
 
   // ──────────────────── CASCADING FILTERS (SLICER LOGIC) ────────────────────
 
@@ -268,10 +186,10 @@ export default function TaxonomyForm() {
 
   const autoSelectChain = (startLevel: 'app' | 'module' | 'incident' | 'action', id: string, unselect: boolean = false) => {
     if (unselect) {
-      if (startLevel === 'action') setSelectedAction('');
-      if (startLevel === 'incident') { setSelectedIncident(''); setSelectedAction(''); }
-      if (startLevel === 'module') { setSelectedModule(''); setSelectedIncident(''); setSelectedAction(''); }
-      if (startLevel === 'app') { setSelectedApp(''); setSelectedModule(''); setSelectedIncident(''); setSelectedAction(''); }
+      if (startLevel === 'action') updateActiveTab({ selectedAction: '' });
+      if (startLevel === 'incident') updateActiveTab({ selectedIncident: '', selectedAction: '' });
+      if (startLevel === 'module') updateActiveTab({ selectedModule: '', selectedIncident: '', selectedAction: '' });
+      if (startLevel === 'app') updateActiveTab({ selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '' });
       return;
     }
 
@@ -338,10 +256,12 @@ export default function TaxonomyForm() {
       }
     }
 
-    setSelectedApp(finalApp);
-    setSelectedModule(finalMod);
-    setSelectedIncident(finalInc);
-    setSelectedAction(finalAct);
+    updateActiveTab({
+      selectedApp: finalApp,
+      selectedModule: finalMod,
+      selectedIncident: finalInc,
+      selectedAction: finalAct,
+    });
   };
 
   const handleAppClick = (appId: string) => {
@@ -357,7 +277,7 @@ export default function TaxonomyForm() {
       );
       if (resolvedMod) {
         // Set app first, then resolve module under that app
-        setSelectedApp(appId);
+        updateActiveTab({ selectedApp: appId });
         autoSelectChain('module', resolvedMod._id, false);
         return;
       }
@@ -403,15 +323,19 @@ export default function TaxonomyForm() {
   // ──────────────────── TAG LOGIC ────────────────────
 
   const toggleCategory = (catId: string) => {
-    setActiveCategories(prev =>
-      prev.includes(catId) ? prev.filter(c => c !== catId) : [...prev, catId]
-    );
+    updateActiveTab(prev => ({
+      activeCategories: prev.activeCategories.includes(catId) 
+        ? prev.activeCategories.filter(c => c !== catId) 
+        : [...prev.activeCategories, catId]
+    }));
   };
 
   const toggleTag = (tagId: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]
-    );
+    updateActiveTab(prev => ({
+      selectedTags: prev.selectedTags.includes(tagId) 
+        ? prev.selectedTags.filter(t => t !== tagId) 
+        : [...prev.selectedTags, tagId]
+    }));
   };
 
   const visibleTags = useMemo(() => {
@@ -431,6 +355,14 @@ export default function TaxonomyForm() {
     ];
     return parts.filter(Boolean).join(':');
   }, [selectedApp, selectedModule, selectedIncident, selectedAction, applications, allModules, allIncidents, allActions]);
+
+  useEffect(() => {
+    if (!activeTabId) return;
+    const newTitle = shortDescription || 'Novo Chamado';
+    if (activeTab?.title !== newTitle) {
+      updateActiveTabTitle(newTitle);
+    }
+  }, [shortDescription, activeTabId, activeTab?.title, updateActiveTabTitle]);
 
   const selectedTagNames = useMemo(() =>
     selectedTags.map(id => tags.find(t => t._id === id)?.name).filter(Boolean) as string[],
@@ -527,6 +459,7 @@ export default function TaxonomyForm() {
         solucao: solucao || undefined,
       });
       setClosureSaved(true);
+      markActiveTabAsSaved();
       setTimeout(() => setClosureSaved(false), 3000);
       setError(null);
     } catch (err) {
@@ -534,7 +467,7 @@ export default function TaxonomyForm() {
     } finally {
       setSavingClosure(false);
     }
-  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete]);
+  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete, markActiveTabAsSaved]);
 
   const executeClearAll = async (withSave: boolean) => {
     if (withSave) {
@@ -548,30 +481,17 @@ export default function TaxonomyForm() {
       motivo, analise, solucao
     });
     
-    setSelectedApp('');
-    setSelectedModule('');
-    setSelectedIncident('');
-    setSelectedAction('');
-    setSelectedTags([]);
-    setActiveCategories([]);
-    setMotivo('');
-    setAnalise('');
-    setSolucao('');
-    clearCache();
+    updateActiveTab({
+      selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '',
+      selectedTags: [], activeCategories: [], motivo: '', analise: '', solucao: ''
+    });
+    
     setIsConfirmClearModalOpen(false);
   };
 
   const handleUndo = () => {
     if (!previousState) return;
-    setSelectedApp(previousState.selectedApp);
-    setSelectedModule(previousState.selectedModule);
-    setSelectedIncident(previousState.selectedIncident);
-    setSelectedAction(previousState.selectedAction);
-    setActiveCategories(previousState.activeCategories);
-    setSelectedTags(previousState.selectedTags);
-    setMotivo(previousState.motivo);
-    setAnalise(previousState.analise);
-    setSolucao(previousState.solucao);
+    updateActiveTab(previousState);
     setPreviousState(null);
   };
 
@@ -625,8 +545,12 @@ export default function TaxonomyForm() {
         </div>
       )}
 
+      {/* Tab Bar */}
+      <div className="mb-4 -mx-2 sm:-mx-0">
+        <TabBar />
+      </div>
+
       {/* Header */}
-      
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-5">
        
 
@@ -808,7 +732,7 @@ export default function TaxonomyForm() {
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Motivo</label>
                 <textarea
                   value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
+                  onChange={(e) => updateActiveTab({ motivo: e.target.value })}
                   placeholder="Ex: Utilizador bloqueado no AD..."
                   className="form-input resize-none h-16 text-sm"
                 />
@@ -817,7 +741,7 @@ export default function TaxonomyForm() {
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Análise</label>
                 <textarea
                   value={analise}
-                  onChange={(e) => setAnalise(e.target.value)}
+                  onChange={(e) => updateActiveTab({ analise: e.target.value })}
                   placeholder="Ex: Acedido ao AD, verificado bloqueio..."
                   className="form-input resize-none h-16 text-sm"
                 />
@@ -826,7 +750,7 @@ export default function TaxonomyForm() {
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Solução</label>
                 <textarea
                   value={solucao}
-                  onChange={(e) => setSolucao(e.target.value)}
+                  onChange={(e) => updateActiveTab({ solucao: e.target.value })}
                   placeholder="Ex: Desbloqueado a conta no AD..."
                   className="form-input resize-none h-16 text-sm"
                 />
