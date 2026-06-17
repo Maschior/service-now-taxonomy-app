@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface TaxonomyFormData {
   selectedApp: string;
@@ -173,8 +173,34 @@ export const useTaxonomyStore = create<TaxonomyStore>()(
     }),
     {
       name: 'taxonomy-tabs-storage',
-      // Optional: don't persist activeTabId if you want it to always open the first tab on reload, 
-      // but usually users prefer remembering the active tab.
+      storage: createJSONStorage(() => ({
+        getItem: (name: string) => {
+          try {
+            return localStorage.getItem(name);
+          } catch (e) {
+            console.warn("localStorage is disabled or not accessible.");
+            return null;
+          }
+        },
+        setItem: (name: string, value: string) => {
+          try {
+            localStorage.setItem(name, value);
+          } catch (e: any) {
+            if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+              alert("O armazenamento do navegador está cheio! Feche algumas abas antigas para conseguir salvar mais chamados.");
+            } else {
+              console.warn("Failed to save to localStorage:", e);
+            }
+          }
+        },
+        removeItem: (name: string) => {
+          try {
+            localStorage.removeItem(name);
+          } catch (e) {
+            console.warn("Failed to remove from localStorage:", e);
+          }
+        },
+      })),
     }
   )
 );
