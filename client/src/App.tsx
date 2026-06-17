@@ -13,11 +13,32 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import TabBar from './components/TabBar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
+import { Profile } from './pages/Profile';
+import { ManageUsers } from './components/ManageUsers';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuth();
   if (!token) {
     return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
+
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { token } = useAuth();
+  if (token) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { token, user } = useAuth();
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
   }
   return <>{children}</>;
 };
@@ -43,15 +64,18 @@ function App() {
           <main className="flex-1 w-full px-4 md:px-8 py-6">
             <ErrorBoundary>
               <Routes>
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
                 <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                 <Route path="/closures" element={<ProtectedRoute><ThreeColumnLayout><ClosuresPage /></ThreeColumnLayout></ProtectedRoute>} />
-                <Route path="/admin" element={<ProtectedRoute><ThreeColumnLayout><AdminDashboard /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/admin" element={<AdminRoute><ThreeColumnLayout><AdminDashboard /></ThreeColumnLayout></AdminRoute>} />
                 <Route path="/manage/applications" element={<ProtectedRoute><ThreeColumnLayout><ManageApplications /></ThreeColumnLayout></ProtectedRoute>} />
                 <Route path="/manage/modules" element={<ProtectedRoute><ThreeColumnLayout><ManageModules /></ThreeColumnLayout></ProtectedRoute>} />
                 <Route path="/manage/incidents" element={<ProtectedRoute><ThreeColumnLayout><ManageIncidents /></ThreeColumnLayout></ProtectedRoute>} />
                 <Route path="/manage/actions" element={<ProtectedRoute><ThreeColumnLayout><ManageActions /></ThreeColumnLayout></ProtectedRoute>} />
                 <Route path="/manage/tags" element={<ProtectedRoute><ThreeColumnLayout><ManageTags /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/manage/users" element={<AdminRoute><ThreeColumnLayout><ManageUsers /></ThreeColumnLayout></AdminRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><ThreeColumnLayout><Profile /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
 
             </ErrorBoundary>

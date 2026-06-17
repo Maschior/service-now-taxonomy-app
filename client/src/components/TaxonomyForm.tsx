@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2, Sun, Moon } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2, Sun, Moon, Keyboard } from 'lucide-react';
 import { closureApi, handleApiError } from '../services/api';
 import { useDebounce } from '../hooks/useDebounce';
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -17,6 +18,7 @@ export default function TaxonomyForm() {
 
   const [previousState, setPreviousState] = useState<any>(null);
   const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
 
   // Search states
   const [appSearch, setAppSearch] = useState('');
@@ -558,8 +560,66 @@ export default function TaxonomyForm() {
 
   return (
     <div className="animate-fade-in-up">
+      {/* Modal de Atalhos */}
+      {isShortcutsModalOpen && createPortal(
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="p-6 rounded-2xl w-full max-w-md animate-fade-in-up border shadow-2xl" 
+               style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-secondary)' }}>
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Keyboard size={20} className="text-[var(--accent-primary)]" />
+              Atalhos de Teclado
+            </h3>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Salvar Fechamento</span>
+                <div className="flex gap-1">
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Ctrl</kbd>
+                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>S</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Nova Aba</span>
+                <div className="flex gap-1">
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Alt</kbd>
+                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>T</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Fechar Aba Atual</span>
+                <div className="flex gap-1">
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Alt</kbd>
+                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>W</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Mudar de Aba</span>
+                <div className="flex gap-1">
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Alt</kbd>
+                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>1-9</kbd>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button 
+                onClick={() => setIsShortcutsModalOpen(false)}
+                className="btn-primary text-sm px-4 py-2 justify-center"
+              >
+                Entendi
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Modal Confirmação de Limpeza */}
-      {isConfirmClearModalOpen && (
+      {isConfirmClearModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="p-6 rounded-2xl w-full max-w-md animate-fade-in-up border shadow-2xl" 
                style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-secondary)' }}>
@@ -590,7 +650,8 @@ export default function TaxonomyForm() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Header */}
@@ -648,6 +709,13 @@ export default function TaxonomyForm() {
               Limpar Tudo
             </button>
             <div className="w-px h-5 mx-1" style={{ background: 'var(--border-primary)' }} />
+            <button
+              onClick={() => setIsShortcutsModalOpen(true)}
+              className="flex items-center justify-center btn-ghost text-xs px-2 py-2"
+              title="Atalhos do Teclado"
+            >
+              <Keyboard size={16} />
+            </button>
             <button
               onClick={toggleTheme}
               className="flex items-center justify-center btn-ghost text-xs px-2 py-2"

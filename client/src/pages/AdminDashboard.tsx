@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, importApi, handleApiError } from '../services/api';
-import { BarChart3, Package, AlertTriangle, Zap, Tags, ArrowRight, Sparkles, Info, UploadCloud } from 'lucide-react';
+import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, importApi, handleApiError, userApi } from '../services/api';
+import { BarChart3, Package, AlertTriangle, Zap, Tags, ArrowRight, Sparkles, Info, UploadCloud, Users } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -9,7 +9,8 @@ export default function AdminDashboard() {
     modules: 0,
     incidents: 0,
     actions: 0,
-    tags: 0
+    tags: 0,
+    users: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,12 +27,13 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const [appsRes, modsRes, incsRes, actsRes, tagsRes] = await Promise.all([
+      const [appsRes, modsRes, incsRes, actsRes, tagsRes, usersRes] = await Promise.all([
         applicationApi.getAll(),
         moduleApi.getAll(),
         incidentApi.getAll({}),
         actionApi.getAll({}),
-        tagApi.getAll()
+        tagApi.getAll(),
+        userApi.getAll()
       ]);
 
       setStats({
@@ -39,7 +41,8 @@ export default function AdminDashboard() {
         modules: modsRes.data.length,
         incidents: incsRes.data.length,
         actions: actsRes.data.length,
-        tags: tagsRes.data.length
+        tags: tagsRes.data.length,
+        users: usersRes.data.length
       });
       setError(null);
     } catch (err) {
@@ -88,9 +91,11 @@ export default function AdminDashboard() {
     { icon: AlertTriangle, label: 'Incidents', value: stats.incidents, gradient: 'from-amber-500 to-orange-500' },
     { icon: Zap, label: 'Actions', value: stats.actions, gradient: 'from-purple-500 to-violet-500' },
     { icon: Tags, label: 'Tags', value: stats.tags, gradient: 'from-cyan-500 to-blue-500' },
+    { icon: Users, label: 'Users', value: stats.users, gradient: 'from-pink-500 to-rose-500' },
   ];
 
   const quickLinks = [
+    { path: '/manage/users', label: 'Gerenciar Usuários', color: '#e11d48' },
     { path: '/manage/applications', label: 'Gerenciar Applications', color: 'var(--accent-primary)' },
     { path: '/manage/modules', label: 'Gerenciar Modules', color: '#10b981' },
     { path: '/manage/incidents', label: 'Gerenciar Incidents', color: '#f59e0b' },
@@ -130,7 +135,7 @@ export default function AdminDashboard() {
       ) : (
         <>
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 stagger-children">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-children">
             {statCards.map(({ icon: Icon, label, value, gradient }) => (
               <div key={label} className="stat-card">
                 <div className="flex items-center justify-between mb-3">

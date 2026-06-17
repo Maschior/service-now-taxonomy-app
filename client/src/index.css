@@ -524,7 +524,7 @@
 
 .three-column-layout {
   display: grid;
-  grid-template-columns: minmax(0, var(--col-left, 1fr)) minmax(0, var(--col-center, 3fr)) minmax(0, var(--col-right, 1fr));
+  grid-template-columns: minmax(0, var(--col-left, 1fr)) minmax(0, var(--col-center, 8fr)) minmax(0, var(--col-right, 1fr));
   gap: 2rem;
   width: 100%;
   max-width: 1600px;
