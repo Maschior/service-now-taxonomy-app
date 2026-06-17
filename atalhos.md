@@ -1,0 +1,4 @@
+  •  Ctrl + S  (ou  Cmd + S  no Mac): Salvar Chamado. Aciona a mesma lógica do botão "Salvar" (se os campos obrigatórios não estiverem preenchidos, ele avisa na tela e nada acontece).
+  •  Alt + T : Nova Aba. Abre instantaneamente uma nova aba limpa ("Novo Chamado") e já foca nela.
+  •  Alt + W : Fechar Aba. Fecha a aba atual em foco. Usa a mesma inteligência que implementamos antes: se a aba tiver texto não salvo, ele exibe a janela de confirmação de segurança (Window Confirm).
+  •  Alt + 1  até  Alt + 9 : Navegação de Abas. Pula diretamente para a aba na posição correspondente (ex:  Alt + 1  vai para a primeira aba da esquerda,  Alt + 2  para a segunda, etc).

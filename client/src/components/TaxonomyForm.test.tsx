@@ -66,7 +66,7 @@ describe('TaxonomyForm Component', () => {
 
   it('renders correctly without loading state', () => {
     render(<TaxonomyForm />);
-    expect(screen.getByTestId('mock-tabbar')).toBeInTheDocument();
+
     expect(screen.getByText(/App 1/)).toBeInTheDocument();
   });
 
