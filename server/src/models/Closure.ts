@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IClosure extends Document {
+  workspaceId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   shortDescription: string;
   resolutionNotes: string;
   applicationId?: mongoose.Types.ObjectId;
@@ -16,6 +18,16 @@ export interface IClosure extends Document {
 
 const closureSchema = new Schema<IClosure>(
   {
+    workspaceId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Workspace',
+      required: true
+    },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
     shortDescription: {
       type: String,
       required: true,

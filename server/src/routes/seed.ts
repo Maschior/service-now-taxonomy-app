@@ -6,6 +6,9 @@ import { Incident } from '../models/Incident.js';
 import { Action } from '../models/Action.js';
 import { TagCategory } from '../models/TagCategory.js';
 import { Tag } from '../models/Tag.js';
+import Workspace from '../models/Workspace.js';
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -20,12 +23,32 @@ export const performSeed = async () => {
   const initialData = JSON.parse(readFileSync(dataPath, 'utf-8'));
 
   console.log('Seeding database...');
+  await Workspace.deleteMany({});
+  await User.deleteMany({});
   await Application.deleteMany({});
   await Module.deleteMany({});
   await Incident.deleteMany({});
   await Action.deleteMany({});
   await TagCategory.deleteMany({});
   await Tag.deleteMany({});
+
+  console.log('Creating Global Workspace...');
+  const globalWorkspace = await Workspace.create({
+    name: 'Global',
+    isGlobal: true,
+    isActive: true
+  });
+
+  console.log('Creating Admin User...');
+  const passwordHash = await bcrypt.hash('admin123', 10);
+  await User.create({
+    name: 'Super Admin',
+    email: 'admin@taxonomy.local',
+    passwordHash,
+    role: 'ADMIN',
+    workspaces: [globalWorkspace._id]
+  });
+
 
   const appMap: Record<string, string> = {};
   for (const appName of initialData.applications) {

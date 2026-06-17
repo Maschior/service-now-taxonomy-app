@@ -1,16 +1,25 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { Action } from '../models/Action.js';
 import { Incident } from '../models/Incident.js';
 import { Module } from '../models/Module.js';
 import { actionValidation, idValidation, validateRequest } from '../middleware/validation.js';
 import { ApiError } from '../middleware/errorHandler.js';
+import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
+import { requireAuth } from '../middleware/auth.js';
+import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
 
 const router = Router();
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.use(requireAuth);
+router.use(requireWorkspace);
+
+router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const { incidentId, incidentIds: incidentIdsParam, moduleId, applicationId } = req.query;
-    let filter: any = {};
+    let filter: any = {
+      workspaceId: { $in: req.accessibleWorkspaceIds },
+      isActive: true
+    };
 
     if (incidentId) {
       filter.incidentIds = incidentId;
@@ -18,13 +27,25 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       const ids = (incidentIdsParam as string).split(',');
       filter.incidentIds = { $in: ids };
     } else if (moduleId) {
-      const incidents = await Incident.find({ moduleIds: moduleId }).select('_id');
+      const incidents = await Incident.find({ 
+        moduleIds: moduleId,
+        workspaceId: { $in: req.accessibleWorkspaceIds },
+        isActive: true
+      }).select('_id');
       const incIds = incidents.map(i => i._id);
       filter.incidentIds = { $in: incIds };
     } else if (applicationId) {
-      const modules = await Module.find({ applicationId }).select('_id');
+      const modules = await Module.find({ 
+        applicationId,
+        workspaceId: { $in: req.accessibleWorkspaceIds },
+        isActive: true
+      }).select('_id');
       const modIds = modules.map(m => m._id);
-      const incidents = await Incident.find({ moduleIds: { $in: modIds } }).select('_id');
+      const incidents = await Incident.find({ 
+        moduleIds: { $in: modIds },
+        workspaceId: { $in: req.accessibleWorkspaceIds },
+        isActive: true
+      }).select('_id');
       const incIds = incidents.map(i => i._id);
       filter.incidentIds = { $in: incIds };
     }
@@ -38,14 +59,26 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
-
-router.post('/', actionValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', actionValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
-    const existing = await Action.findOne(getCaseInsensitiveQuery(req.body.name));
-    if (existing) throw new ApiError(400, 'Já existe uma ação com este nome.');
+    const isGlobal = req.body.isGlobal === true;
+    if (isGlobal && req.user?.role !== 'ADMIN') {
+      throw new ApiError(403, 'Apenas administradores podem criar registros globais.');
+    }
 
-    const action = new Action(req.body);
+    const targetWorkspaceId = isGlobal ? req.globalWorkspaceId : req.currentWorkspaceId;
+
+    const existing = await Action.findOne({
+      ...getCaseInsensitiveQuery(req.body.name),
+      workspaceId: { $in: req.accessibleWorkspaceIds },
+      isActive: true
+    });
+    if (existing) throw new ApiError(400, 'Já existe uma ação ativa com este nome no workspace atual ou global.');
+
+    const action = new Action({
+      ...req.body,
+      workspaceId: targetWorkspaceId
+    });
     await action.save();
     await action.populate({ path: 'incidentIds', populate: { path: 'moduleIds', populate: { path: 'applicationId' } } });
     res.status(201).json(action);
@@ -54,28 +87,52 @@ router.post('/', actionValidation, validateRequest, async (req: Request, res: Re
   }
 });
 
-router.put('/:id', idValidation, actionValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', idValidation, actionValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
+    const targetAction = await Action.findById(req.params.id);
+    if (!targetAction || !targetAction.isActive) throw new ApiError(404, 'Ação não encontrada ou inativa');
+
+    if (targetAction.workspaceId.toString() === req.globalWorkspaceId && req.user?.role !== 'ADMIN') {
+      throw new ApiError(403, 'Apenas administradores podem editar registros globais.');
+    }
+
+    if (targetAction.workspaceId.toString() !== req.currentWorkspaceId && targetAction.workspaceId.toString() !== req.globalWorkspaceId) {
+       throw new ApiError(403, 'Sem permissão para editar esta ação.');
+    }
+
     const existing = await Action.findOne({
       ...getCaseInsensitiveQuery(req.body.name),
+      workspaceId: { $in: req.accessibleWorkspaceIds },
+      isActive: true,
       _id: { $ne: req.params.id }
     });
     if (existing) throw new ApiError(400, 'Já existe uma ação com este nome.');
 
     const action = await Action.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
       .populate({ path: 'incidentIds', populate: { path: 'moduleIds', populate: { path: 'applicationId' } } });
-    if (!action) throw new ApiError(404, 'Action not found');
     res.json(action);
   } catch (error) {
     next(error);
   }
 });
 
-router.delete('/:id', idValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', idValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
-    const action = await Action.findByIdAndDelete(req.params.id);
-    if (!action) throw new ApiError(404, 'Action not found');
-    res.json({ message: 'Action deleted' });
+    const targetAction = await Action.findById(req.params.id);
+    if (!targetAction || !targetAction.isActive) throw new ApiError(404, 'Ação não encontrada ou já inativa');
+
+    if (targetAction.workspaceId.toString() === req.globalWorkspaceId && req.user?.role !== 'ADMIN') {
+      throw new ApiError(403, 'Apenas administradores podem excluir registros globais.');
+    }
+
+    if (targetAction.workspaceId.toString() !== req.currentWorkspaceId && targetAction.workspaceId.toString() !== req.globalWorkspaceId) {
+      throw new ApiError(403, 'Sem permissão para excluir esta ação.');
+    }
+
+    targetAction.isActive = false;
+    await targetAction.save(); // triggers pre-save hook
+
+    res.json({ message: 'Ação inativada com sucesso' });
   } catch (error) {
     next(error);
   }

@@ -1,18 +1,24 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { Closure } from '../models/Closure.js';
 import { closureValidation, validateRequest, idValidation } from '../middleware/validation.js';
 import { ApiError } from '../middleware/errorHandler.js';
+import { requireAuth } from '../middleware/auth.js';
+import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
 
 const router = Router();
+router.use(requireAuth);
+router.use(requireWorkspace);
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
     const skip = (page - 1) * limit;
 
     const { search, shortDescription, tags, startDate, endDate } = req.query;
-    let filter: any = {};
+    let filter: any = {
+      workspaceId: { $in: req.accessibleWorkspaceIds }
+    };
 
     if (search) {
       const searchRegex = { $regex: search as string, $options: 'i' };
@@ -64,9 +70,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-router.post('/', closureValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', closureValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
-    const closure = new Closure(req.body);
+    const closure = new Closure({
+      ...req.body,
+      workspaceId: req.currentWorkspaceId,
+      userId: req.user?.id
+    });
     await closure.save();
     await closure.populate(['applicationId', 'moduleId', 'incidentId', 'actionId', 'tags']);
     res.status(201).json(closure);
@@ -75,10 +85,13 @@ router.post('/', closureValidation, validateRequest, async (req: Request, res: R
   }
 });
 
-router.delete('/:id', idValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', idValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
-    const closure = await Closure.findByIdAndDelete(req.params.id);
-    if (!closure) throw new ApiError(404, 'Closure not found');
+    const closure = await Closure.findOneAndDelete({ 
+      _id: req.params.id,
+      workspaceId: { $in: req.accessibleWorkspaceIds } // or just require exact workspace/admin? Let's just limit to accessible for safety
+    });
+    if (!closure) throw new ApiError(404, 'Closure not found or access denied');
     res.json({ message: 'Closure deleted' });
   } catch (error) {
     next(error);

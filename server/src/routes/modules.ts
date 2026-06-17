@@ -1,14 +1,23 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { Module } from '../models/Module.js';
 import { moduleValidation, idValidation, validateRequest } from '../middleware/validation.js';
 import { ApiError } from '../middleware/errorHandler.js';
+import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
+import { requireAuth } from '../middleware/auth.js';
+import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
 
 const router = Router();
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.use(requireAuth);
+router.use(requireWorkspace);
+
+router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const { applicationId, applicationIds } = req.query;
-    let filter: any = {};
+    let filter: any = {
+      workspaceId: { $in: req.accessibleWorkspaceIds },
+      isActive: true
+    };
 
     if (applicationId) {
       filter.applicationId = applicationId;
@@ -24,47 +33,83 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
-
-router.post('/', moduleValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', moduleValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
-    const existing = await Module.findOne({
-      applicationId: req.body.applicationId,
-      ...getCaseInsensitiveQuery(req.body.name)
-    });
-    if (existing) throw new ApiError(400, 'Já existe um módulo com este nome para esta aplicação.');
+    const isGlobal = req.body.isGlobal === true;
+    if (isGlobal && req.user?.role !== 'ADMIN') {
+      throw new ApiError(403, 'Apenas administradores podem criar registros globais.');
+    }
 
-    const module = new Module(req.body);
-    await module.save();
-    await module.populate('applicationId');
-    res.status(201).json(module);
-  } catch (error) {
-    next(error);
-  }
-});
+    const targetWorkspaceId = isGlobal ? req.globalWorkspaceId : req.currentWorkspaceId;
 
-router.put('/:id', idValidation, moduleValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
-  try {
     const existing = await Module.findOne({
       applicationId: req.body.applicationId,
       ...getCaseInsensitiveQuery(req.body.name),
-      _id: { $ne: req.params.id }
+      workspaceId: { $in: req.accessibleWorkspaceIds },
+      isActive: true
     });
-    if (existing) throw new ApiError(400, 'Já existe um módulo com este nome para esta aplicação.');
+    
+    if (existing) throw new ApiError(400, 'Já existe um módulo ativo com este nome para esta aplicação no workspace atual ou global.');
 
-    const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('applicationId');
-    if (!module) throw new ApiError(404, 'Module not found');
-    res.json(module);
+    const newModule = new Module({
+      ...req.body,
+      workspaceId: targetWorkspaceId
+    });
+    await newModule.save();
+    await newModule.populate('applicationId');
+    res.status(201).json(newModule);
   } catch (error) {
     next(error);
   }
 });
 
-router.delete('/:id', idValidation, validateRequest, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', idValidation, moduleValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
-    const module = await Module.findByIdAndDelete(req.params.id);
-    if (!module) throw new ApiError(404, 'Module not found');
-    res.json({ message: 'Module deleted' });
+    const targetModule = await Module.findById(req.params.id);
+    if (!targetModule || !targetModule.isActive) throw new ApiError(404, 'Módulo não encontrado ou inativo');
+
+    if (targetModule.workspaceId.toString() === req.globalWorkspaceId && req.user?.role !== 'ADMIN') {
+      throw new ApiError(403, 'Apenas administradores podem editar registros globais.');
+    }
+
+    if (targetModule.workspaceId.toString() !== req.currentWorkspaceId && targetModule.workspaceId.toString() !== req.globalWorkspaceId) {
+       throw new ApiError(403, 'Sem permissão para editar este módulo.');
+    }
+
+    const existing = await Module.findOne({
+      applicationId: req.body.applicationId,
+      ...getCaseInsensitiveQuery(req.body.name),
+      workspaceId: { $in: req.accessibleWorkspaceIds },
+      isActive: true,
+      _id: { $ne: req.params.id }
+    });
+
+    if (existing) throw new ApiError(400, 'Já existe um módulo com este nome para esta aplicação.');
+
+    const updatedModule = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('applicationId');
+    res.json(updatedModule);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/:id', idValidation, validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
+  try {
+    const targetModule = await Module.findById(req.params.id);
+    if (!targetModule || !targetModule.isActive) throw new ApiError(404, 'Módulo não encontrado ou já inativo');
+
+    if (targetModule.workspaceId.toString() === req.globalWorkspaceId && req.user?.role !== 'ADMIN') {
+      throw new ApiError(403, 'Apenas administradores podem excluir registros globais.');
+    }
+
+    if (targetModule.workspaceId.toString() !== req.currentWorkspaceId && targetModule.workspaceId.toString() !== req.globalWorkspaceId) {
+      throw new ApiError(403, 'Sem permissão para excluir este módulo.');
+    }
+
+    targetModule.isActive = false;
+    await targetModule.save(); // triggers pre-save hook
+
+    res.json({ message: 'Módulo inativado com sucesso' });
   } catch (error) {
     next(error);
   }
