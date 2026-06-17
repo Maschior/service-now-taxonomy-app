@@ -39,7 +39,7 @@ docker-compose up --build
 ```
 
 - **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5000
+- **Backend API**: http://localhost:5005
 
 ---
 
@@ -54,7 +54,7 @@ docker-compose up --build
 cd server
 cp .env.example .env
 npm install
-npm run dev:mock  # Starts the Express server with an in-memory MongoDB on port 5000 and auto-seeds data
+npm run dev:mock  # Starts the Express server with an in-memory MongoDB on port 5005 and auto-seeds data
 # (If you have a real local MongoDB, you can use `npm run dev` instead)
 ```
 

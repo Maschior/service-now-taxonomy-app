@@ -1,144 +1,108 @@
 # Setup Instructions
 
-## Prerequisites
+## Pré-requisitos
 - Node.js 18+ (https://nodejs.org/)
-- MongoDB 7.0+ locally or MongoDB Atlas account
+- MongoDB 7.0+ instalado localmente, rodando via Docker, ou uma conta no MongoDB Atlas.
 - Git
 
-## Option 1: Quick Start with Mock DB (Local Dev, no Docker)
+---
 
-### 1. Backend Setup
+## Opção 1: Inicialização Rápida com Banco de Dados em Memória (Desenvolvimento Local)
+Esta é a maneira mais fácil de testar e desenvolver a aplicação. O backend será executado com um MongoDB em memória (usando `mongodb-memory-server`) e auto-populará o banco com dados de exemplo (Workspaces, Usuários e Taxonomias).
+
+### 1. Setup do Backend
 ```bash
 cd server
 npm install
-npm run dev:mock    # Starts in-memory MongoDB and auto-seeds data on http://localhost:5000
+npm run dev:mock    # Inicia o MongoDB em memória, popula os dados e roda o Express na porta 5005
 ```
 
-### 2. Frontend Setup (new terminal)
+### 2. Setup do Frontend (em um novo terminal)
 ```bash
 cd client
 npm install
-npm run dev    # Starts on http://localhost:5173
+npm run dev    # Inicia o Vite na porta 5173
 ```
 
-Open `http://localhost:5173` in your browser.
+Abra `http://localhost:5173` no seu navegador.
 
-## Option 2: Docker Compose (Production / Full Stack)
+> **Credenciais Padrão (dev:mock):**
+> - **Email**: `user@taxonomy.local`
+> - **Senha**: `senha123`
 
-Em produção, os mapeamentos de pasta não ocorrem para que a imagem construída seja usada.
+---
+
+## Opção 2: Docker Compose (Ambiente de Produção Local / Integração Completa)
+
+O arquivo `docker-compose.yml` é pré-configurado para subir toda a stack (MongoDB, Backend Node.js e Frontend React) em uma rede isolada. **Nota:** No ambiente Docker as pastas locais de código (`volumes`) não são montadas no container. O código fonte será buildado e empacotado na imagem.
 
 ```bash
 docker-compose up --build
 ```
 
-- Backend: http://localhost:5000
-- Frontend: http://localhost:5173
-- MongoDB: localmente na rede do docker
+- **Backend API**: http://localhost:5005
+- **Frontend Vite**: http://localhost:5173
+- **MongoDB**: Rodando internamente na porta 27017
 
-## Features to Try
+---
 
-### Main Page (Home)
-1. Select an **Application** (e.g., "Apriso")
-2. Choose a **Module** from the dropdown
-3. Select an **Incident** and **Action**
-4. Add **Tags** from categories
-5. Write **Motivo** (reason) and **Análise** (analysis)
-6. Copy the generated **Short Description** or **Resolution Notes**
+## Funcionalidades Principais para Testar
 
-### Admin Dashboard
-1. Navigate to **Admin Dashboard** in navbar
-2. View stats on all taxonomy items
-3. Click links to manage each category
+### Login e Workspaces
+1. Acesse o sistema e faça login usando as credenciais listadas acima.
+2. O sistema suporta múltiplos Workspaces. Se um usuário pertencer a mais de um, ele poderá escolher qual Workspace acessar após o login.
+3. Seus registros criados (Tags, Incidentes, Aplicações) ficarão isolados por Workspace (ou como dados Globais).
 
-### Manage Applications
-1. Go to **Applications** page
-2. See all existing applications (prevents duplicates)
-3. Add new application
-4. Edit or delete as needed
+### Página Principal (Taxonomia)
+1. Selecione uma **Aplicação** (ex: "Apriso").
+2. Escolha um **Módulo** no dropdown.
+3. Selecione o respectivo **Incidente** e **Ação**.
+4. Adicione **Tags** clicando nas categorias.
+5. Preencha os campos de texto livre **Motivo**, **Análise** e **Solução**.
+6. Copie a **Short Description** e o **Resolution Notes** auto-gerados.
+7. Clique em **Registrar Fechamento** no topo para salvar o ticket finalizado.
 
-### Manage Modules/Incidents/Actions
-- Similar workflow: see existing items, add new ones
-- Items are tied to specific applications
-- Prevents duplicates per application
+### Telas de Gerenciamento (Admin & Usuário Comum)
+1. Navegue pelo menu lateral para gerenciar as bases do sistema.
+2. As tabelas de gerenciamento possuem uma interface limpa com edição rápida (botões de lápis/lixeira) e modais para criação em lote (`Create` vs `Create and Close`).
+3. O painel restrito **Gerenciar Usuários** `/manage/users` só fica visível para usuários com função de `ADMIN`.
 
-### Manage Tags
-- Tags are organized by categories (Fábrica, Gerais, etc.)
-- Add new tags to categories
-- All tags available in main form
+---
 
-## Troubleshooting
+## Solução de Problemas (Troubleshooting)
 
 ### "Cannot connect to MongoDB"
-- Ensure MongoDB is running
-- Check connection string in `.env`
-- For MongoDB Atlas, verify IP whitelist
+- Se estiver rodando sem o `dev:mock`, verifique se seu MongoDB local está rodando e aceite conexões na porta `27017`.
+- Verifique a variável `MONGODB_URI` no arquivo `server/.env`.
+- Para MongoDB Atlas, verifique se o seu IP está liberado no painel da AWS/Atlas (IP Whitelist).
 
-### "Port 5000/5173 already in use"
-- Change PORT in `.env` (server) or vite.config.ts (client)
-- Or kill the process using that port
+### "Port 5005/5173 already in use"
+- Altere a variável `PORT` no arquivo `.env` (backend).
+- No frontend, o Vite vai automaticamente tentar usar a próxima porta disponível (ex: 5174), então atualize sua variável de ambiente `CORS_ORIGIN` no servidor para permitir a nova porta.
 
-### "Duplicate key error"
-- This is by design! The app prevents duplicate entries
-- Check existing items before adding new ones
-- Edit existing entry instead of creating duplicate
+### Interface desalinhada ou Modais Cortados
+- Certifique-se de realizar *hard refresh* (`Ctrl + F5`) no navegador após atualizações de versão de UI, para limpar qualquer arquivo antigo cacheado do Vite.
 
-### API not responding from frontend
-- Check backend is running on port 5000
-- Verify CORS settings in server code
-- Check browser console for errors
+---
 
-## Database Seeding
-
-To re-seed the database with initial data:
+## População de Banco de Dados (Seed)
+Caso você precise popular um banco de dados **real** (não-mockado) localmente ou no Atlas:
 
 ```bash
 cd server
+# Confirme que sua MONGODB_URI está configurada corretamente no seu .env local.
 npm run seed
 ```
+Isso inserirá um Workspace global padrão, um usuário de teste (ADMIN) e uma carga inicial das árvores de taxonomia.
 
-## API Documentation
+---
 
-All endpoints return JSON. Base URL: `http://localhost:5000/api`
-
-### Health Check
-- `GET /health` - Server status
-
-### Applications
-- `GET /applications` - List all
-- `POST /applications` - Create (name required)
-- `PUT /applications/:id` - Update
-- `DELETE /applications/:id` - Delete
-
-### Modules
-- `GET /modules?applicationId=:id` - Filter by app
-- `POST /modules` - Create (name, applicationId required)
-- `PUT /modules/:id` - Update
-- `DELETE /modules/:id` - Delete
-
-Similar endpoints for `/incidents`, `/actions`, `/tags`
-
-## Production Deployment
-
-See `DEPLOYMENT.md` for production deployment options (Railway, Render, Docker, etc.)
-
-## Development Tips
-
-- Backend auto-restarts on file changes (nodemon)
-- Frontend hot-reloads on save (Vite)
-- Check browser console for frontend errors
-- Check server console for backend errors
-- MongoDB indexes automatically prevent duplicates
-
-## Stopping Services
+## Parando os Serviços
 
 ```bash
 # Docker Compose
 docker-compose down
 
-# Manual processes
-Ctrl+C in each terminal
+# Processos Manuais (Terminal)
+Pressione Ctrl+C em cada terminal (Vite e Node).
 ```
-
----
-
-Questions? Check the code comments or refer to the plan at `/home/maschior/.claude/plans/async-mapping-quasar.md`
