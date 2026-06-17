@@ -32,7 +32,7 @@ export default function TaxonomyForm() {
   const debouncedActionSearch = useDebounce(actionSearch, 300);
 
   // Tab State
-  const { tabs, activeTabId, updateActiveTab, updateActiveTabTitle, markActiveTabAsSaved, removeTab } = useTaxonomyStore();
+  const { tabs, activeTabId, updateActiveTab, updateActiveTabTitle, markActiveTabAsSaved, removeTab, addTab, setActiveTab } = useTaxonomyStore();
   const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
   const formData = activeTab?.data || {
     selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '',
@@ -502,6 +502,52 @@ export default function TaxonomyForm() {
     updateActiveTab(previousState);
     setPreviousState(null);
   };
+
+  // ──────────────────── KEYBOARD SHORTCUTS ────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S / Cmd+S: Save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!isFormIncomplete && !savingClosure) {
+          handleRegisterClosure();
+        }
+      }
+      
+      // Alt+T: New Tab
+      if (e.altKey && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        addTab();
+      }
+
+      // Alt+W: Close Tab
+      if (e.altKey && e.key.toLowerCase() === 'w') {
+        e.preventDefault();
+        if (activeTabId) {
+          const tab = tabs.find(t => t.id === activeTabId);
+          if (tab) {
+             const isEmpty = !tab.data.selectedApp && !tab.data.motivo.trim() && !tab.data.analise.trim() && !tab.data.solucao.trim();
+             if (!isEmpty && !tab.isSaved) {
+               if (!window.confirm("Essa aba tem dados não salvos. Deseja realmente fechá-la?")) return;
+             }
+             removeTab(activeTabId);
+          }
+        }
+      }
+      
+      // Alt + 1-9: Navigate to tab
+      if (e.altKey && !isNaN(parseInt(e.key)) && parseInt(e.key) > 0 && parseInt(e.key) <= 9) {
+        e.preventDefault();
+        const index = parseInt(e.key) - 1;
+        if (tabs[index]) {
+          setActiveTab(tabs[index].id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [tabs, activeTabId, isFormIncomplete, savingClosure, handleRegisterClosure, addTab, removeTab, setActiveTab]);
 
   // ──────────────────── RENDER ────────────────────
 
