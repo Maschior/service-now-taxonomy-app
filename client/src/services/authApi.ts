@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const authApi = axios.create({
   baseURL: `${API_URL}/auth`,
@@ -9,8 +9,8 @@ const authApi = axios.create({
   },
 });
 
-export const login = async (email: string, password: string) => {
-  const response = await authApi.post('/login', { email, password });
+export const login = async (email: string, password: string, rememberMe: boolean = false) => {
+  const response = await authApi.post('/login', { email, password, rememberMe });
   return response.data;
 };
 
