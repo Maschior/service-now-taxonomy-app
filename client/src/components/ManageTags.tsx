@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
 import { tagApi, handleApiError } from '../services/api';
 import { Tag, TagCategory } from '../types/index';
-import { Trash2, Plus, X, Tags } from 'lucide-react';
+import { Trash2, Plus, X, Tags, Edit, Globe, Home } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
 export default function ManageTags() {
+  const { user, currentWorkspaceId } = useAuth();
   const [tags, setTags] = useState<Tag[]>([]);
   const [categories, setCategories] = useState<TagCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', categoryId: '' });
+  const [formData, setFormData] = useState({ name: '', categoryId: '', isGlobal: false });
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -20,6 +22,7 @@ export default function ManageTags() {
   // Category state
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState('');
+  const [isGlobalCategory, setIsGlobalCategory] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -50,9 +53,10 @@ export default function ManageTags() {
       if (editingCategoryId) {
         await tagApi.updateCategory(editingCategoryId, { name: categoryName });
       } else {
-        await tagApi.createCategory({ name: categoryName });
+        await tagApi.createCategory({ name: categoryName, isGlobal: isGlobalCategory });
       }
       setCategoryName('');
+      setIsGlobalCategory(false);
       setEditingCategoryId(null);
       fetchData();
     } catch (err) {
@@ -70,11 +74,29 @@ export default function ManageTags() {
       } else {
         await tagApi.create(formData);
       }
-      setFormData({ name: '', categoryId: '' });
+      setFormData({ name: '', categoryId: '', isGlobal: false });
       setEditingId(null);
       fetchData();
     } catch (err) {
       setError(handleApiError(err));
+    }
+  };
+
+  const handleEdit = (tag: Tag) => {
+    setFormData({ name: tag.name, categoryId: getId(tag.categoryId), isGlobal: false });
+    setEditingId(tag._id);
+  };
+
+  const handleInactivate = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja inativar esta tag?')) {
+      try {
+        setLoading(true);
+        await tagApi.delete(id);
+        fetchData();
+      } catch (err) {
+        setError(handleApiError(err));
+        setLoading(false);
+      }
     }
   };
 
@@ -163,9 +185,23 @@ export default function ManageTags() {
               onChange={(e) => setCategoryName(e.target.value)}
               className="form-input"
             />
+            {user?.role === 'ADMIN' && !editingCategoryId && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isGlobalCategory"
+                  checked={isGlobalCategory}
+                  onChange={(e) => setIsGlobalCategory(e.target.checked)}
+                  className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                <label htmlFor="isGlobalCategory" className="text-sm font-medium text-[var(--text-secondary)]">
+                  Criar como Global
+                </label>
+              </div>
+            )}
             <div className="flex gap-2">
               <button type="submit" className="btn-primary flex items-center gap-2">
-                <Plus size={18} /> {editingCategoryId ? 'Update' : 'Add'}
+                <Plus size={18} /> {editingCategoryId ? 'Atualizar' : 'Adicionar'}
               </button>
               {editingCategoryId && (
                 <button
@@ -211,14 +247,28 @@ export default function ManageTags() {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="form-input"
             />
+            {user?.role === 'ADMIN' && !editingId && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isGlobalTag"
+                  checked={formData.isGlobal}
+                  onChange={(e) => setFormData({ ...formData, isGlobal: e.target.checked })}
+                  className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                <label htmlFor="isGlobalTag" className="text-sm font-medium text-[var(--text-secondary)]">
+                  Criar como Global
+                </label>
+              </div>
+            )}
             <div className="flex gap-2">
               <button type="submit" className="btn-primary flex items-center gap-2">
-                <Plus size={18} /> {editingId ? 'Update' : 'Add'}
+                <Plus size={18} /> {editingId ? 'Atualizar' : 'Adicionar'}
               </button>
               {editingId && (
                 <button
                   type="button"
-                  onClick={() => { setEditingId(null); setFormData({ name: '', categoryId: '' }); }}
+                  onClick={() => { setEditingId(null); setFormData({ name: '', categoryId: '', isGlobal: false }); }}
                   className="btn-ghost flex items-center gap-2"
                 >
                   <X size={18} /> Cancel
@@ -273,24 +323,55 @@ export default function ManageTags() {
                       onChange={toggleSelectAll} 
                     />
                   </th>
+                  <th className="text-left p-4">Escopo</th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Category</th>
+                  <th className="text-right p-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map(tag => (
+                {filteredItems.map(tag => {
+                  const isLocal = tag.workspaceId === currentWorkspaceId;
+                  const canEdit = isLocal || user?.role === 'ADMIN';
+
+                  return (
                   <tr key={tag._id} className={selectedIds.includes(tag._id) ? "bg-red-500/5" : ""}>
                     <td className="p-4">
                       <input 
                         type="checkbox" 
                         checked={selectedIds.includes(tag._id)} 
                         onChange={() => toggleSelectOne(tag._id)} 
+                        disabled={!canEdit}
                       />
                     </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${isLocal ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {isLocal ? <Home size={12} /> : <Globe size={12} />}
+                        {isLocal ? 'Local' : 'Global'}
+                      </span>
+                    </td>
                     <td className="p-4 font-mono">{tag.name}</td>
-                    <td className="p-4 opacity-70">{getCategoryName(tag.categoryId)}</td>
+                    <td className="p-4 opacity-70 text-sm">{getCategoryName(tag.categoryId)}</td>
+                    <td className="p-4 text-right space-x-2">
+                      <button 
+                        onClick={() => handleEdit(tag)} 
+                        disabled={!canEdit}
+                        className="btn-ghost p-2 text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleInactivate(tag._id)} 
+                        disabled={!canEdit}
+                        className="btn-ghost p-2 text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Inativar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

@@ -1,18 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
 import { incidentApi, moduleApi, applicationApi, handleApiError } from '../services/api';
 import { Incident, Module, Application } from '../types/index';
-import { Plus, X, AlertTriangle } from 'lucide-react';
+import { Plus, X, AlertTriangle, Edit, Trash2, Globe, Home } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
 export default function ManageIncidents() {
+  const { user, currentWorkspaceId } = useAuth();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', moduleId: '' });
+  const [formData, setFormData] = useState({ name: '', moduleId: '', isGlobal: false });
   const [searchTerm, setSearchTerm] = useState('');
   const [applicationFilter, setApplicationFilter] = useState('');
   const [moduleFilter, setModuleFilter] = useState('');
@@ -47,7 +49,8 @@ export default function ManageIncidents() {
 
     const payload = {
       name: formData.name,
-      moduleIds: [formData.moduleId]
+      moduleIds: [formData.moduleId],
+      isGlobal: formData.isGlobal
     };
 
     try {
@@ -56,11 +59,29 @@ export default function ManageIncidents() {
       } else {
         await incidentApi.create(payload);
       }
-      setFormData({ name: '', moduleId: '' });
+      setFormData({ name: '', moduleId: '', isGlobal: false });
       setEditingId(null);
       fetchData();
     } catch (err) {
       setError(handleApiError(err));
+    }
+  };
+
+  const handleEdit = (inc: Incident) => {
+    setFormData({ name: inc.name, moduleId: inc.moduleIds?.length ? getId(inc.moduleIds[0]) : '', isGlobal: false });
+    setEditingId(inc._id);
+  };
+
+  const handleInactivate = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja inativar este incidente?')) {
+      try {
+        setLoading(true);
+        await incidentApi.delete(id);
+        fetchData();
+      } catch (err) {
+        setError(handleApiError(err));
+        setLoading(false);
+      }
     }
   };
 
@@ -151,14 +172,28 @@ export default function ManageIncidents() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="form-input"
           />
+          {user?.role === 'ADMIN' && !editingId && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isGlobal"
+                checked={formData.isGlobal}
+                onChange={(e) => setFormData({ ...formData, isGlobal: e.target.checked })}
+                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              <label htmlFor="isGlobal" className="text-sm font-medium text-[var(--text-secondary)]">
+                Criar como Global (visível para todos os Workspaces)
+              </label>
+            </div>
+          )}
           <div className="flex gap-2">
             <button type="submit" className="btn-primary flex items-center gap-2">
-              <Plus size={18} /> {editingId ? 'Update' : 'Add'}
+              <Plus size={18} /> {editingId ? 'Atualizar' : 'Adicionar'}
             </button>
             {editingId && (
               <button
                 type="button"
-                onClick={() => { setEditingId(null); setFormData({ name: '', moduleId: '' }); }}
+                onClick={() => { setEditingId(null); setFormData({ name: '', moduleId: '', isGlobal: false }); }}
                 className="btn-ghost flex items-center gap-2"
               >
                 <X size={18} /> Cancel
@@ -225,26 +260,57 @@ export default function ManageIncidents() {
                       onChange={toggleSelectAll} 
                     />
                   </th>
+                  <th className="text-left p-4">Escopo</th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Module</th>
+                  <th className="text-right p-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map(inc => (
+                {filteredItems.map(inc => {
+                  const isLocal = inc.workspaceId === currentWorkspaceId;
+                  const canEdit = isLocal || user?.role === 'ADMIN';
+
+                  return (
                   <tr key={inc._id} className={selectedIds.includes(inc._id) ? "bg-red-500/5" : ""}>
                     <td className="p-4">
                       <input 
                         type="checkbox" 
                         checked={selectedIds.includes(inc._id)} 
                         onChange={() => toggleSelectOne(inc._id)} 
+                        disabled={!canEdit}
                       />
                     </td>
-                    <td className="p-4">{inc.name}</td>
-                    <td className="p-4 opacity-70">
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${isLocal ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {isLocal ? <Home size={12} /> : <Globe size={12} />}
+                        {isLocal ? 'Local' : 'Global'}
+                      </span>
+                    </td>
+                    <td className="p-4 font-medium">{inc.name}</td>
+                    <td className="p-4 opacity-70 text-sm">
                       {inc.moduleIds?.length ? getModuleName(inc.moduleIds[0]) : 'None'}
                     </td>
+                    <td className="p-4 text-right space-x-2">
+                      <button 
+                        onClick={() => handleEdit(inc)} 
+                        disabled={!canEdit}
+                        className="btn-ghost p-2 text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleInactivate(inc._id)} 
+                        disabled={!canEdit}
+                        className="btn-ghost p-2 text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Inativar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

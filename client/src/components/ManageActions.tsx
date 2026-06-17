@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { actionApi, incidentApi, handleApiError } from '../services/api';
 import { Action, Incident } from '../types/index';
-import { Plus, X, Activity } from 'lucide-react';
+import { Plus, X, Activity, Edit, Trash2, Globe, Home } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
 export default function ManageActions() {
+  const { user, currentWorkspaceId } = useAuth();
   const [actions, setActions] = useState<Action[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', incidentId: '' });
+  const [formData, setFormData] = useState({ name: '', incidentId: '', isGlobal: false });
   const [searchTerm, setSearchTerm] = useState('');
   const [incidentFilter, setIncidentFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -43,7 +45,8 @@ export default function ManageActions() {
 
     const payload = {
       name: formData.name,
-      incidentIds: [formData.incidentId]
+      incidentIds: [formData.incidentId],
+      isGlobal: formData.isGlobal
     };
 
     try {
@@ -52,11 +55,29 @@ export default function ManageActions() {
       } else {
         await actionApi.create(payload);
       }
-      setFormData({ name: '', incidentId: '' });
+      setFormData({ name: '', incidentId: '', isGlobal: false });
       setEditingId(null);
       fetchData();
     } catch (err) {
       setError(handleApiError(err));
+    }
+  };
+
+  const handleEdit = (act: Action) => {
+    setFormData({ name: act.name, incidentId: act.incidentIds?.length ? getId(act.incidentIds[0]) : '', isGlobal: false });
+    setEditingId(act._id);
+  };
+
+  const handleInactivate = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja inativar esta ação?')) {
+      try {
+        setLoading(true);
+        await actionApi.delete(id);
+        fetchData();
+      } catch (err) {
+        setError(handleApiError(err));
+        setLoading(false);
+      }
     }
   };
 
@@ -133,14 +154,28 @@ export default function ManageActions() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="form-input"
           />
+          {user?.role === 'ADMIN' && !editingId && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isGlobal"
+                checked={formData.isGlobal}
+                onChange={(e) => setFormData({ ...formData, isGlobal: e.target.checked })}
+                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              <label htmlFor="isGlobal" className="text-sm font-medium text-[var(--text-secondary)]">
+                Criar como Global (visível para todos os Workspaces)
+              </label>
+            </div>
+          )}
           <div className="flex gap-2">
             <button type="submit" className="btn-primary flex items-center gap-2">
-              <Plus size={18} /> {editingId ? 'Update' : 'Add'}
+              <Plus size={18} /> {editingId ? 'Atualizar' : 'Adicionar'}
             </button>
             {editingId && (
               <button
                 type="button"
-                onClick={() => { setEditingId(null); setFormData({ name: '', incidentId: '' }); }}
+                onClick={() => { setEditingId(null); setFormData({ name: '', incidentId: '', isGlobal: false }); }}
                 className="btn-ghost flex items-center gap-2"
               >
                 <X size={18} /> Cancel
@@ -194,26 +229,57 @@ export default function ManageActions() {
                       onChange={toggleSelectAll} 
                     />
                   </th>
+                  <th className="text-left p-4">Escopo</th>
                   <th className="text-left p-4">Name</th>
                   <th className="text-left p-4">Incident</th>
+                  <th className="text-right p-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map(act => (
+                {filteredItems.map(act => {
+                  const isLocal = act.workspaceId === currentWorkspaceId;
+                  const canEdit = isLocal || user?.role === 'ADMIN';
+
+                  return (
                   <tr key={act._id} className={selectedIds.includes(act._id) ? "bg-red-500/5" : ""}>
                     <td className="p-4">
                       <input 
                         type="checkbox" 
                         checked={selectedIds.includes(act._id)} 
                         onChange={() => toggleSelectOne(act._id)} 
+                        disabled={!canEdit}
                       />
                     </td>
-                    <td className="p-4">{act.name}</td>
-                    <td className="p-4 opacity-70">
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${isLocal ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {isLocal ? <Home size={12} /> : <Globe size={12} />}
+                        {isLocal ? 'Local' : 'Global'}
+                      </span>
+                    </td>
+                    <td className="p-4 font-medium">{act.name}</td>
+                    <td className="p-4 opacity-70 text-sm">
                       {act.incidentIds?.length ? getIncidentName(act.incidentIds[0]) : 'None'}
                     </td>
+                    <td className="p-4 text-right space-x-2">
+                      <button 
+                        onClick={() => handleEdit(act)} 
+                        disabled={!canEdit}
+                        className="btn-ghost p-2 text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleInactivate(act._id)} 
+                        disabled={!canEdit}
+                        className="btn-ghost p-2 text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Inativar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
