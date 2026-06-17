@@ -27,6 +27,9 @@ interface TaxonomyStore {
   // Tab Management
   addTab: (title?: string) => void;
   removeTab: (id: string) => void;
+  closeAllOtherTabs: (id: string) => void;
+  closeTabsToLeft: (id: string) => void;
+  closeTabsToRight: (id: string) => void;
   setActiveTab: (id: string) => void;
   clearAllTabs: () => void;
   
@@ -75,7 +78,6 @@ export const useTaxonomyStore = create<TaxonomyStore>()(
           let newActiveId = state.activeTabId;
           
           if (state.activeTabId === id) {
-            // Select the previous tab if available, else the first one, else null
             const index = state.tabs.findIndex((t) => t.id === id);
             if (newTabs.length > 0) {
               newActiveId = newTabs[Math.max(0, index - 1)].id;
@@ -83,10 +85,44 @@ export const useTaxonomyStore = create<TaxonomyStore>()(
               newActiveId = null;
             }
           }
+          return { tabs: newTabs, activeTabId: newActiveId };
+        });
+      },
+
+      closeAllOtherTabs: (id) => {
+        set((state) => {
+          const targetTab = state.tabs.find(t => t.id === id);
+          if (!targetTab) return state;
+          return { tabs: [targetTab], activeTabId: id };
+        });
+      },
+
+      closeTabsToLeft: (id) => {
+        set((state) => {
+          const index = state.tabs.findIndex(t => t.id === id);
+          if (index <= 0) return state;
+          
+          const newTabs = state.tabs.slice(index);
+          const isActivedRemoved = !newTabs.some(t => t.id === state.activeTabId);
           
           return {
             tabs: newTabs,
-            activeTabId: newActiveId,
+            activeTabId: isActivedRemoved ? id : state.activeTabId
+          };
+        });
+      },
+
+      closeTabsToRight: (id) => {
+        set((state) => {
+          const index = state.tabs.findIndex(t => t.id === id);
+          if (index === -1 || index === state.tabs.length - 1) return state;
+          
+          const newTabs = state.tabs.slice(0, index + 1);
+          const isActivedRemoved = !newTabs.some(t => t.id === state.activeTabId);
+          
+          return {
+            tabs: newTabs,
+            activeTabId: isActivedRemoved ? id : state.activeTabId
           };
         });
       },

@@ -32,7 +32,7 @@ export default function TaxonomyForm() {
   const debouncedActionSearch = useDebounce(actionSearch, 300);
 
   // Tab State
-  const { tabs, activeTabId, updateActiveTab, updateActiveTabTitle, markActiveTabAsSaved } = useTaxonomyStore();
+  const { tabs, activeTabId, updateActiveTab, updateActiveTabTitle, markActiveTabAsSaved, removeTab } = useTaxonomyStore();
   const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
   const formData = activeTab?.data || {
     selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '',
@@ -460,14 +460,22 @@ export default function TaxonomyForm() {
       });
       setClosureSaved(true);
       markActiveTabAsSaved();
-      setTimeout(() => setClosureSaved(false), 3000);
+      
+      const currentTabId = activeTabId;
+      setTimeout(() => {
+        setClosureSaved(false);
+        if (currentTabId) {
+          removeTab(currentTabId);
+        }
+      }, 1500); // 1.5s to see the success state
+      
       setError(null);
     } catch (err) {
       setError(handleApiError(err));
     } finally {
       setSavingClosure(false);
     }
-  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete, markActiveTabAsSaved]);
+  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete, markActiveTabAsSaved, activeTabId, removeTab]);
 
   const executeClearAll = async (withSave: boolean) => {
     if (withSave) {
