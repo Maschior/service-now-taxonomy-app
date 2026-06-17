@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import HomePage from './pages/HomePage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -11,6 +11,16 @@ import ManageTags from './components/ManageTags';
 import ThreeColumnLayout from './components/ThreeColumnLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import TabBar from './components/TabBar';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './pages/Login';
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { token } = useAuth();
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
 
 function TopNav() {
   const location = useLocation();
@@ -24,7 +34,8 @@ function TopNav() {
 
 function App() {
   return (
-    <Router>
+    <AuthProvider>
+      <Router>
       <div className="flex min-h-screen">
         <Sidebar />
         <div className="flex-1 w-full min-w-0 flex flex-col relative">
@@ -32,15 +43,17 @@ function App() {
           <main className="flex-1 w-full px-4 md:px-8 py-6">
             <ErrorBoundary>
               <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/closures" element={<ThreeColumnLayout><ClosuresPage /></ThreeColumnLayout>} />
-                <Route path="/admin" element={<ThreeColumnLayout><AdminDashboard /></ThreeColumnLayout>} />
-                <Route path="/manage/applications" element={<ThreeColumnLayout><ManageApplications /></ThreeColumnLayout>} />
-                <Route path="/manage/modules" element={<ThreeColumnLayout><ManageModules /></ThreeColumnLayout>} />
-                <Route path="/manage/incidents" element={<ThreeColumnLayout><ManageIncidents /></ThreeColumnLayout>} />
-                <Route path="/manage/actions" element={<ThreeColumnLayout><ManageActions /></ThreeColumnLayout>} />
-                <Route path="/manage/tags" element={<ThreeColumnLayout><ManageTags /></ThreeColumnLayout>} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                <Route path="/closures" element={<ProtectedRoute><ThreeColumnLayout><ClosuresPage /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><ThreeColumnLayout><AdminDashboard /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/manage/applications" element={<ProtectedRoute><ThreeColumnLayout><ManageApplications /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/manage/modules" element={<ProtectedRoute><ThreeColumnLayout><ManageModules /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/manage/incidents" element={<ProtectedRoute><ThreeColumnLayout><ManageIncidents /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/manage/actions" element={<ProtectedRoute><ThreeColumnLayout><ManageActions /></ThreeColumnLayout></ProtectedRoute>} />
+                <Route path="/manage/tags" element={<ProtectedRoute><ThreeColumnLayout><ManageTags /></ThreeColumnLayout></ProtectedRoute>} />
               </Routes>
+
             </ErrorBoundary>
           </main>
           <footer className="py-3 mt-auto glass-surface w-full text-center text-[11px] text-[var(--text-secondary)] flex justify-center items-center gap-2 transition-opacity cursor-default" style={{ borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
@@ -50,7 +63,8 @@ function App() {
           </footer>
         </div>
       </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 

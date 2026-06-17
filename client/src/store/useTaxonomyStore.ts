@@ -175,7 +175,8 @@ export const useTaxonomyStore = create<TaxonomyStore>()(
       storage: createJSONStorage(() => ({
         getItem: (name: string) => {
           try {
-            return localStorage.getItem(name);
+            const wsId = localStorage.getItem('currentWorkspaceId') || 'global';
+            return localStorage.getItem(`${name}-${wsId}`);
           } catch (e) {
             console.warn("localStorage is disabled or not accessible.");
             return null;
@@ -183,7 +184,8 @@ export const useTaxonomyStore = create<TaxonomyStore>()(
         },
         setItem: (name: string, value: string) => {
           try {
-            localStorage.setItem(name, value);
+            const wsId = localStorage.getItem('currentWorkspaceId') || 'global';
+            localStorage.setItem(`${name}-${wsId}`, value);
           } catch (e: any) {
             if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
               alert("O armazenamento do navegador está cheio! Feche algumas abas antigas para conseguir salvar mais chamados.");
@@ -194,7 +196,8 @@ export const useTaxonomyStore = create<TaxonomyStore>()(
         },
         removeItem: (name: string) => {
           try {
-            localStorage.removeItem(name);
+            const wsId = localStorage.getItem('currentWorkspaceId') || 'global';
+            localStorage.removeItem(`${name}-${wsId}`);
           } catch (e) {
             console.warn("Failed to remove from localStorage:", e);
           }
