@@ -602,7 +602,7 @@ export default function TaxonomyForm() {
               }}
             >
               {closureSaved ? <Check size={14} /> : <Save size={14} />}
-              <span>{closureSaved ? 'Registrado!' : savingClosure ? 'Salvando...' : 'Registrar Fechamento'}</span>
+              <span>{closureSaved ? 'Salvo!' : savingClosure ? 'Salvando...' : 'Salvar'}</span>
             </button>
             {previousState && (
               <button onClick={handleUndo} className="flex items-center justify-center btn-ghost text-xs px-2 py-2" title="Desfazer Limpeza">

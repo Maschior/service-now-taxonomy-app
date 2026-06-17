@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 export default function TabBar() {
   const { 
     tabs, activeTabId, addTab, removeTab, setActiveTab, 
-    closeAllOtherTabs, closeTabsToLeft, closeTabsToRight 
+    closeAllOtherTabs, closeTabsToLeft, closeTabsToRight, clearAllTabs
   } = useTaxonomyStore();
 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
@@ -120,11 +120,11 @@ export default function TabBar() {
           <button 
             className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5"
             onClick={() => {
-              closeAllOtherTabs(contextMenu.tabId);
+              clearAllTabs();
               setContextMenu(null);
             }}
           >
-            Fechar Outras Abas
+            Fechar todas as Abas
           </button>
           <button 
             className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5"
