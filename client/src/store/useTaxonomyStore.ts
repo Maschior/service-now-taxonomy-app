@@ -1,0 +1,144 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export interface TaxonomyFormData {
+  selectedApp: string;
+  selectedModule: string;
+  selectedIncident: string;
+  selectedAction: string;
+  activeCategories: string[];
+  selectedTags: string[];
+  motivo: string;
+  analise: string;
+  solucao: string;
+}
+
+export interface Tab {
+  id: string;
+  title: string;
+  isSaved: boolean;
+  data: TaxonomyFormData;
+}
+
+interface TaxonomyStore {
+  tabs: Tab[];
+  activeTabId: string | null;
+  
+  // Tab Management
+  addTab: (title?: string) => void;
+  removeTab: (id: string) => void;
+  setActiveTab: (id: string) => void;
+  clearAllTabs: () => void;
+  
+  // Updating active tab data
+  updateActiveTab: (updater: Partial<TaxonomyFormData> | ((prev: TaxonomyFormData) => Partial<TaxonomyFormData>)) => void;
+  markActiveTabAsSaved: () => void;
+  updateActiveTabTitle: (title: string) => void;
+}
+
+const initialFormData: TaxonomyFormData = {
+  selectedApp: '',
+  selectedModule: '',
+  selectedIncident: '',
+  selectedAction: '',
+  activeCategories: [],
+  selectedTags: [],
+  motivo: '',
+  analise: '',
+  solucao: '',
+};
+
+const createNewTab = (title: string = 'Novo Chamado'): Tab => ({
+  id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9),
+  title,
+  isSaved: false,
+  data: { ...initialFormData },
+});
+
+export const useTaxonomyStore = create<TaxonomyStore>()(
+  persist(
+    (set, get) => ({
+      tabs: [],
+      activeTabId: null,
+
+      addTab: (title) => {
+        const newTab = createNewTab(title);
+        set((state) => ({
+          tabs: [...state.tabs, newTab],
+          activeTabId: newTab.id,
+        }));
+      },
+
+      removeTab: (id) => {
+        set((state) => {
+          const newTabs = state.tabs.filter((t) => t.id !== id);
+          let newActiveId = state.activeTabId;
+          
+          if (state.activeTabId === id) {
+            // Select the previous tab if available, else the first one, else null
+            const index = state.tabs.findIndex((t) => t.id === id);
+            if (newTabs.length > 0) {
+              newActiveId = newTabs[Math.max(0, index - 1)].id;
+            } else {
+              newActiveId = null;
+            }
+          }
+          
+          return {
+            tabs: newTabs,
+            activeTabId: newActiveId,
+          };
+        });
+      },
+
+      setActiveTab: (id) => set({ activeTabId: id }),
+
+      clearAllTabs: () => set({ tabs: [], activeTabId: null }),
+
+      updateActiveTab: (updater) => {
+        set((state) => {
+          if (!state.activeTabId) return state;
+          
+          const tabIndex = state.tabs.findIndex((t) => t.id === state.activeTabId);
+          if (tabIndex === -1) return state;
+
+          const currentData = state.tabs[tabIndex].data;
+          const updates = typeof updater === 'function' ? updater(currentData) : updater;
+
+          const newTabs = [...state.tabs];
+          newTabs[tabIndex] = {
+            ...newTabs[tabIndex],
+            data: { ...currentData, ...updates },
+          };
+
+          return { tabs: newTabs };
+        });
+      },
+
+      markActiveTabAsSaved: () => {
+        set((state) => {
+          if (!state.activeTabId) return state;
+          const newTabs = state.tabs.map((t) =>
+            t.id === state.activeTabId ? { ...t, isSaved: true } : t
+          );
+          return { tabs: newTabs };
+        });
+      },
+
+      updateActiveTabTitle: (title) => {
+        set((state) => {
+          if (!state.activeTabId) return state;
+          const newTabs = state.tabs.map((t) =>
+            t.id === state.activeTabId ? { ...t, title } : t
+          );
+          return { tabs: newTabs };
+        });
+      },
+    }),
+    {
+      name: 'taxonomy-tabs-storage',
+      // Optional: don't persist activeTabId if you want it to always open the first tab on reload, 
+      // but usually users prefer remembering the active tab.
+    }
+  )
+);
