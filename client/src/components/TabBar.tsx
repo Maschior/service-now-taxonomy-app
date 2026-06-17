@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 export default function TabBar() {
   const { 
     tabs, activeTabId, addTab, removeTab, setActiveTab, 
-    closeAllOtherTabs, closeTabsToLeft, closeTabsToRight, clearAllTabs, updateTabTitle
+    closeTabsToLeft, closeTabsToRight, clearAllTabs, updateTabTitle
   } = useTaxonomyStore();
 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);

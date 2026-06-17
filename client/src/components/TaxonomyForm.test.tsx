@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import TaxonomyForm from './TaxonomyForm';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
