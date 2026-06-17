@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import HomePage from './pages/HomePage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -10,13 +10,25 @@ import ManageActions from './components/ManageActions';
 import ManageTags from './components/ManageTags';
 import ThreeColumnLayout from './components/ThreeColumnLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import TabBar from './components/TabBar';
+
+function TopNav() {
+  const location = useLocation();
+  if (location.pathname !== '/') return null;
+  return (
+    <div className="w-full sticky top-0 z-40 bg-[var(--bg-secondary)] shadow-sm">
+      <TabBar />
+    </div>
+  );
+}
 
 function App() {
   return (
     <Router>
       <div className="flex min-h-screen">
         <Sidebar />
-        <div className="flex-1 w-full min-w-0 flex flex-col">
+        <div className="flex-1 w-full min-w-0 flex flex-col relative">
+          <TopNav />
           <main className="flex-1 w-full px-4 md:px-8 py-6">
             <ErrorBoundary>
               <Routes>

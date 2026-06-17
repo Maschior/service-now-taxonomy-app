@@ -593,11 +593,6 @@ export default function TaxonomyForm() {
         </div>
       )}
 
-      {/* Tab Bar */}
-      <div className="mb-4 -mx-2 sm:-mx-0">
-        <TabBar />
-      </div>
-
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 mb-5">
        

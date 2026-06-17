@@ -57,7 +57,7 @@ export default function TabBar() {
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-1 w-full overflow-x-auto p-2" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-primary)' }}>
+      <div className="flex items-end gap-1 w-full overflow-x-auto pt-2 px-2 pb-0" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-primary)' }}>
         {tabs.map((tab) => (
           <div
             key={tab.id}
@@ -120,7 +120,7 @@ export default function TabBar() {
 
         <button
           onClick={() => addTab()}
-          className="flex items-center justify-center p-1.5 ml-1 rounded-lg transition-colors hover:opacity-80"
+          className="flex items-center justify-center p-1.5 ml-1 mb-1.5 rounded-lg transition-colors hover:opacity-80"
           style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}
           title="Nova Aba"
         >
