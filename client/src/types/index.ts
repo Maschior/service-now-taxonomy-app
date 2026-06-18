@@ -85,3 +85,10 @@ export interface TaxonomyData {
   tags: Tag[];
   tagCategories: TagCategory[];
 }
+
+export interface ImportResponse {
+  message: string;
+  imported: number;
+  skipped: number;
+  errors?: string[];
+}
