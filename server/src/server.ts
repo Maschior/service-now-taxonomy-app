@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './utils/db.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import logger from './utils/logger.js';
+import { ensureDefaultAdmin } from './utils/bootstrap.js';
 
 import applicationsRouter from './routes/applications.js';
 import modulesRouter from './routes/modules.js';
@@ -50,16 +51,24 @@ import { performSeed } from './routes/seed.js';
 const startServer = async () => {
   try {
     await connectDB();
-    
+
     if (process.env.USE_MEMORY_DB === 'true') {
       await performSeed();
+    } else {
+      await ensureDefaultAdmin();
     }
-    
+
     app.listen(PORT, () => {
       logger.info(`✓ Server running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    console.error('Failed to start server:');
+    if (error instanceof Error) {
+      console.error('Error:', error.message);
+      console.error('Stack:', error.stack);
+    } else {
+      console.error('Error:', error);
+    }
     process.exit(1);
   }
 };
