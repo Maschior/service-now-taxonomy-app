@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { applicationApi, moduleApi, incidentApi, actionApi, tagApi, importApi, handleApiError, userApi } from '../services/api';
 import { BarChart3, Package, AlertTriangle, Zap, Tags, ArrowRight, Sparkles, Info, UploadCloud, Users } from 'lucide-react';
+import { Alert, Button } from '../components/ui';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -86,86 +87,77 @@ export default function AdminDashboard() {
   };
 
   const statCards = [
-    { icon: Package, label: 'Applications', value: stats.applications, gradient: 'from-blue-500 to-indigo-500' },
-    { icon: BarChart3, label: 'Modules', value: stats.modules, gradient: 'from-emerald-500 to-teal-500' },
-    { icon: AlertTriangle, label: 'Incidents', value: stats.incidents, gradient: 'from-amber-500 to-orange-500' },
-    { icon: Zap, label: 'Actions', value: stats.actions, gradient: 'from-purple-500 to-violet-500' },
-    { icon: Tags, label: 'Tags', value: stats.tags, gradient: 'from-cyan-500 to-blue-500' },
-    { icon: Users, label: 'Users', value: stats.users, gradient: 'from-pink-500 to-rose-500' },
+    { icon: Package, label: 'Applications', value: stats.applications },
+    { icon: BarChart3, label: 'Modules', value: stats.modules },
+    { icon: AlertTriangle, label: 'Incidents', value: stats.incidents },
+    { icon: Zap, label: 'Actions', value: stats.actions },
+    { icon: Tags, label: 'Tags', value: stats.tags },
+    { icon: Users, label: 'Users', value: stats.users },
   ];
 
   const quickLinks = [
-    { path: '/manage/users', label: 'Gerenciar Usuários', color: '#e11d48' },
-    { path: '/manage/applications', label: 'Gerenciar Applications', color: 'var(--accent-primary)' },
-    { path: '/manage/modules', label: 'Gerenciar Modules', color: '#10b981' },
-    { path: '/manage/incidents', label: 'Gerenciar Incidents', color: '#f59e0b' },
-    { path: '/manage/actions', label: 'Gerenciar Actions', color: '#8b5cf6' },
-    { path: '/manage/tags', label: 'Gerenciar Tags', color: '#06b6d4' },
+    { path: '/manage/users', label: 'Gerenciar Usuários' },
+    { path: '/manage/applications', label: 'Gerenciar Applications' },
+    { path: '/manage/modules', label: 'Gerenciar Modules' },
+    { path: '/manage/incidents', label: 'Gerenciar Incidents' },
+    { path: '/manage/actions', label: 'Gerenciar Actions' },
+    { path: '/manage/tags', label: 'Gerenciar Tags' },
   ];
 
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+        <div className="font-mono text-xs uppercase tracking-[0.08em] text-brand font-medium">Administração</div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink-900 mt-1">
           Admin Dashboard
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-sm mt-1 text-ink-500">
           Gerencie os dados da taxonomia
         </p>
       </div>
 
-      {error && (
-        <div className="section-card flex items-center gap-2 py-3" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
-          <AlertTriangle size={18} style={{ color: '#ef4444' }} />
-          <span style={{ color: '#ef4444' }} className="font-medium">{error}</span>
-        </div>
-      )}
+      {error && <Alert variant="danger">{error}</Alert>}
 
-      {importMsg && (
-        <div className="section-card flex items-center gap-2 py-3" style={{ borderColor: 'rgba(34, 197, 94, 0.3)', background: 'rgba(34, 197, 94, 0.05)' }}>
-          <Sparkles size={18} style={{ color: '#22c55e' }} />
-          <span style={{ color: '#22c55e' }} className="font-medium">{importMsg}</span>
-        </div>
-      )}
+      {importMsg && <Alert variant="success">{importMsg}</Alert>}
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Sparkles size={32} className="animate-pulse" style={{ color: 'var(--accent-primary)' }} />
+          <Sparkles size={32} className="animate-pulse text-brand" />
         </div>
       ) : (
         <>
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-children">
-            {statCards.map(({ icon: Icon, label, value, gradient }) => (
+            {statCards.map(({ icon: Icon, label, value }) => (
               <div key={label} className="stat-card">
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-                    <Icon size={20} className="text-white" />
+                  <div className="w-10 h-10 rounded-lg bg-chip flex items-center justify-center text-ink-700">
+                    <Icon size={20} strokeWidth={1.5} />
                   </div>
                 </div>
-                <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
-                <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                <p className="text-2xl font-bold text-ink-900">{value}</p>
+                <p className="text-xs font-medium mt-1 text-ink-400">{label}</p>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* Bulk Import */}
             <div className="section-card lg:col-span-3">
-              <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
-                  <UploadCloud size={18} style={{ color: 'var(--accent-primary)' }} />
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-line-subtle">
+                <div className="p-1.5 rounded-lg bg-brand-tint">
+                  <UploadCloud size={18} strokeWidth={1.5} className="text-brand" />
                 </div>
-                <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <h2 className="text-base font-semibold text-ink-900">
                   Importar via CSV (ServiceNow)
                 </h2>
               </div>
               <div className="flex flex-col gap-4">
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-sm leading-relaxed text-ink-500">
                   Faça o upload de um arquivo `.csv` contendo os dados de <strong>Short Description</strong> extraídos do Service Now. O formato esperado para cada linha é:
                 </p>
-                <code className="block p-3 rounded-lg text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)', border: '1px solid var(--border-primary)' }}>
+                <code className="block p-3 rounded-lg text-xs font-mono bg-sunken text-ink-500 border border-line">
                   "Application:Module:Local Support:Incident:Action"
                 </code>
                 <div className="flex justify-start">
@@ -176,30 +168,21 @@ export default function AdminDashboard() {
                     ref={fileInputRef}
                     onChange={handleFileUpload}
                   />
-                  <button
+                  <Button
+                    variant="primary"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={importing}
-                    className="btn-primary py-2 px-6 flex items-center gap-2"
+                    leftIcon={importing ? <Sparkles size={16} className="animate-pulse" /> : <UploadCloud size={16} />}
                   >
-                    {importing ? (
-                      <>
-                        <Sparkles size={16} className="animate-pulse" />
-                        <span>Importando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UploadCloud size={16} />
-                        <span>Selecionar Arquivo CSV</span>
-                      </>
-                    )}
-                  </button>
+                    {importing ? 'Importando...' : 'Selecionar Arquivo CSV'}
+                  </Button>
                 </div>
               </div>
             </div>
 
             {/* Quick Actions */}
             <div className="section-card lg:col-span-1">
-              <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+              <h2 className="text-base font-semibold mb-4 text-ink-900">
                 Ações Rápidas
               </h2>
               <div className="space-y-2">
@@ -207,16 +190,14 @@ export default function AdminDashboard() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className="flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 group"
-                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)' }}
+                    className="flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors duration-150 group bg-sunken border border-line hover:border-brand hover:bg-brand-tint"
                   >
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-sm font-medium text-ink-700 group-hover:text-brand">
                       {link.label}
                     </span>
                     <ArrowRight
                       size={14}
-                      className="transition-transform duration-200 group-hover:translate-x-1"
-                      style={{ color: link.color }}
+                      className="text-ink-400 group-hover:text-brand transition-transform duration-150 group-hover:translate-x-1"
                     />
                   </Link>
                 ))}
@@ -226,21 +207,21 @@ export default function AdminDashboard() {
             {/* Info */}
             <div className="section-card lg:col-span-2">
               <div className="flex items-center gap-2 mb-4">
-                <Info size={16} style={{ color: 'var(--accent-primary)' }} />
-                <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <Info size={16} strokeWidth={1.5} className="text-brand" />
+                <h2 className="text-base font-semibold text-ink-900">
                   Informações
                 </h2>
               </div>
               <div className="space-y-3">
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-sm leading-relaxed text-ink-500">
                   Use este dashboard para gerenciar aplicações, módulos, incidentes, ações e tags da taxonomia.
                 </p>
-                <div className="text-xs leading-relaxed p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
-                  <strong style={{ color: 'var(--text-secondary)' }}>Hierarquia:</strong>
+                <div className="text-xs leading-relaxed p-3 rounded-lg bg-sunken text-ink-400">
+                  <strong className="text-ink-700">Hierarquia:</strong>
                   <br />
                   Application → Module → Incident → Action
                   <br /><br />
-                  <strong style={{ color: 'var(--text-secondary)' }}>Relacionamentos:</strong>
+                  <strong className="text-ink-700">Relacionamentos:</strong>
                   <br />
                   • 1 App → N Módulos
                   <br />
