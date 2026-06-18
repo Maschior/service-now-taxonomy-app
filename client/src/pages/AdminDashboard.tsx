@@ -67,7 +67,22 @@ export default function AdminDashboard() {
         const text = e.target?.result as string;
         if (text) {
           const res = await importApi.importCsv(text);
-          setImportMsg(res.data.message);
+          let msg = res.data.message;
+
+          // Append error details if any
+          if (res.data.errors && res.data.errors.length > 0) {
+            msg += '\n\nErros encontrados:\n';
+            res.data.errors.slice(0, 5).forEach((err: string) => {
+              msg += `• ${err}\n`;
+            });
+            if (res.data.errors.length > 5) {
+              msg += `... e mais ${res.data.errors.length - 5} erros`;
+            }
+            setError(msg);
+          } else {
+            setImportMsg(msg);
+          }
+
           fetchStats(); // Refresh stats after import
         }
       } catch (err) {
