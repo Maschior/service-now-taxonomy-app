@@ -57,7 +57,7 @@ export default function TabBar() {
 
   return (
     <div className="relative">
-      <div className="flex items-end gap-1 w-full overflow-x-auto pt-2 px-2 pb-0" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-primary)' }}>
+      <div className="flex items-end gap-1 w-full overflow-x-auto pt-2 px-2 pb-0" style={{ background: 'var(--bg-sunken)', borderBottom: '1px solid var(--border)' }}>
         {tabs.map((tab) => (
           <div
             key={tab.id}
@@ -68,12 +68,12 @@ export default function TabBar() {
             onContextMenu={(e) => handleContextMenu(e, tab.id)}
             className={`group flex items-center gap-2 px-3 py-1.5 rounded-t-lg cursor-pointer select-none transition-all duration-200 min-w-[120px] max-w-[200px] border-b-2 relative`}
             style={{
-              background: activeTabId === tab.id ? 'var(--bg-primary)' : 'rgba(0,0,0,0.02)',
-              borderBottomColor: activeTabId === tab.id ? 'var(--accent-primary)' : 'transparent',
+              background: activeTabId === tab.id ? 'var(--bg-surface)' : 'transparent',
+              borderBottomColor: activeTabId === tab.id ? 'var(--brand)' : 'transparent',
               opacity: activeTabId === tab.id ? 1 : 0.7,
             }}
           >
-            <AlignLeft size={14} style={{ color: tab.isSaved ? 'var(--success-color)' : 'var(--text-muted)' }} />
+            <AlignLeft size={14} style={{ color: tab.isSaved ? 'var(--success-fg)' : 'var(--ink-400)' }} />
             {editingTabId === tab.id ? (
               <input
                 autoFocus
@@ -92,7 +92,7 @@ export default function TabBar() {
                   }
                 }}
                 className="text-sm font-medium flex-1 outline-none bg-transparent min-w-[50px] max-w-full"
-                style={{ color: 'var(--text-primary)' }}
+                style={{ color: 'var(--ink-900)' }}
               />
             ) : (
               <span 
@@ -100,8 +100,8 @@ export default function TabBar() {
                   setEditingTabId(tab.id);
                   setEditTitleValue(tab.title);
                 }}
-                className="text-sm font-medium truncate flex-1" 
-                style={{ color: activeTabId === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+                className="text-sm font-medium truncate flex-1"
+                style={{ color: activeTabId === tab.id ? 'var(--ink-900)' : 'var(--ink-500)' }}
                 title={tab.title}
               >
                 {tab.title}
@@ -109,8 +109,8 @@ export default function TabBar() {
             )}
             <button
               onClick={(e) => handleCloseTab(tab.id, e)}
-              className="p-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-500"
-              style={{ color: 'var(--text-muted)' }}
+              className="p-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-danger-bg hover:text-danger-fg"
+              style={{ color: 'var(--ink-400)' }}
               title="Fechar Aba"
             >
               <X size={14} />
@@ -120,8 +120,8 @@ export default function TabBar() {
 
         <button
           onClick={() => addTab()}
-          className="flex items-center justify-center p-1.5 ml-1 mb-1.5 rounded-lg transition-colors hover:opacity-80"
-          style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}
+          className="flex items-center justify-center p-1.5 ml-1 mb-1.5 rounded-lg transition-colors hover:bg-hover"
+          style={{ color: 'var(--ink-500)', background: 'var(--bg-surface)' }}
           title="Nova Aba"
         >
           <Plus size={16} />
@@ -131,22 +131,23 @@ export default function TabBar() {
       {contextMenu && (
         <div 
           ref={contextMenuRef}
-          className="fixed z-[9999] py-1 rounded-lg shadow-xl border text-sm animate-fade-in w-auto whitespace-nowrap min-w-[150px]"
-          style={{ 
-            background: 'var(--bg-card)', 
-            borderColor: 'var(--border-secondary)',
+          className="fixed z-[9999] py-1 rounded-lg shadow-md border text-sm animate-fade-in w-auto whitespace-nowrap min-w-[150px]"
+          style={{
+            background: 'var(--bg-surface)',
+            borderColor: 'var(--border)',
+            color: 'var(--ink-700)',
             left: Math.min(contextMenu.x, window.innerWidth - 250),
-            top: contextMenu.y 
+            top: contextMenu.y
           }}
         >
-          <button 
-            className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5"
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-hover"
             onClick={() => handleCloseTab(contextMenu.tabId)}
           >
             Fechar Aba
           </button>
-          <button 
-            className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5"
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-hover"
             onClick={() => {
               clearAllTabs();
               setContextMenu(null);
@@ -154,8 +155,8 @@ export default function TabBar() {
           >
             Fechar todas as Abas
           </button>
-          <button 
-            className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5"
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-hover"
             onClick={() => {
               closeTabsToLeft(contextMenu.tabId);
               setContextMenu(null);
@@ -163,8 +164,8 @@ export default function TabBar() {
           >
             Fechar Abas à Esquerda
           </button>
-          <button 
-            className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5"
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-hover"
             onClick={() => {
               closeTabsToRight(contextMenu.tabId);
               setContextMenu(null);

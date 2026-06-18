@@ -47,7 +47,7 @@ function TopNav() {
   const location = useLocation();
   if (location.pathname !== '/') return null;
   return (
-    <div className="w-full sticky top-0 z-40 bg-[var(--bg-secondary)] shadow-sm">
+    <div className="w-full sticky top-0 z-40 bg-surface-sunken shadow-sm">
       <TabBar />
     </div>
   );
@@ -80,10 +80,10 @@ function App() {
 
             </ErrorBoundary>
           </main>
-          <footer className="py-3 mt-auto glass-surface w-full text-center text-[11px] text-[var(--text-secondary)] flex justify-center items-center gap-2 transition-opacity cursor-default" style={{ borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
-            <span>Autor: <strong className="font-semibold text-[var(--text-primary)]">Matheus Delmaschio</strong></span>
-            <span className="w-1 h-1 rounded-full bg-[var(--text-muted)]"></span>
-            <span>Team: <strong className="font-semibold text-[var(--text-primary)]">Softtek</strong></span>
+          <footer className="py-3 mt-auto w-full text-center text-[11px] text-ink-500 flex justify-center items-center gap-2 border-t border-line bg-surface-2 cursor-default">
+            <span>Autor: <strong className="font-semibold text-ink-900">Matheus Delmaschio</strong></span>
+            <span className="w-1 h-1 rounded-full bg-ink-400"></span>
+            <span>Team: <strong className="font-semibold text-ink-900">Softtek</strong></span>
           </footer>
         </div>
       </div>
