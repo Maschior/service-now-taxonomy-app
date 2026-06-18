@@ -24,13 +24,17 @@ router.post(
       const normalizedEmail = email.trim().toLowerCase();
       const user = await User.findOne({ email: normalizedEmail }).populate('workspaces');
       if (!user) {
+        console.warn(`[LOGIN] Falha: usuário não encontrado para email="${normalizedEmail}". Total de usuários no banco: ${await User.countDocuments()}`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
+        console.warn(`[LOGIN] Falha: senha não confere para email="${normalizedEmail}". Hash no banco começa com "${user.passwordHash.substring(0, 7)}".`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
+
+      console.log(`[LOGIN] Sucesso para email="${normalizedEmail}".`);
 
       const token = jwt.sign(
         { id: user._id, role: user.role },
