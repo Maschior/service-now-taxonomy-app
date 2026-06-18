@@ -48,7 +48,8 @@ vi.mock('lucide-react', () => ({
   LayoutTemplate: () => <span>LayoutTemplate</span>,
   Terminal: () => <span>Terminal</span>,
   Search: () => <span>Search</span>,
-  Wrench: () => <span>Wrench</span>
+  Wrench: () => <span>Wrench</span>,
+  Keyboard: () => <span>Keyboard</span>
 }));
 
 // Mock TabBar to simplify the component tree
