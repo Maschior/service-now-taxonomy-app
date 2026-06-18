@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { userApi, handleApiError } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, Trash2, Edit2, Check, X, UserPlus } from 'lucide-react';
+import { Alert, Badge, Button, Card, Input, Modal, Select } from './ui';
 
 interface UserData {
   _id: string;
@@ -56,7 +56,7 @@ export const ManageUsers: React.FC = () => {
         setIsModalOpen(false);
         setFormData({ name: '', email: '', password: '', role: 'USER' });
       } else {
-        // Keep email, password, role the same if needed, or clear all? 
+        // Keep email, password, role the same if needed, or clear all?
         // For users, it's better to clear at least email and password.
         setFormData({ name: '', email: '', password: '', role: formData.role });
       }
@@ -98,125 +98,116 @@ export const ManageUsers: React.FC = () => {
 
   if (currentUser?.role !== 'ADMIN') {
     return (
-      <div className="flex-1 p-8 flex items-center justify-center text-red-500">
+      <div className="flex-1 p-8 flex items-center justify-center text-danger-fg">
         Acesso Negado: Apenas administradores podem ver esta tela.
       </div>
     );
   }
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
+    <div className="space-y-6 animate-fade-in-up max-w-6xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Shield className="text-brand" size={28} strokeWidth={1.5} />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Shield className="w-6 h-6 text-indigo-500" />
-              Gerenciamento de Usuários
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">Gerencie os acessos ao workspace.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-ink-900 m-0">Gerenciamento de Usuários</h1>
+            <p className="text-ink-500 mt-1">Gerencie os acessos ao workspace.</p>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2"
-          >
-            <UserPlus className="w-5 h-5" />
-            Novo Usuário
-          </button>
         </div>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<UserPlus size={18} strokeWidth={2} />}>
+          Novo Usuário
+        </Button>
+      </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
+      {error && <Alert variant="danger">{error}</Alert>}
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500">Carregando usuários...</div>
-          ) : (
+      <Card>
+        {loading ? (
+          <div className="p-8 text-center text-ink-400">Carregando usuários...</div>
+        ) : (
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                  <th className="py-4 px-6 text-sm font-semibold text-gray-600 dark:text-gray-300">Nome</th>
-                  <th className="py-4 px-6 text-sm font-semibold text-gray-600 dark:text-gray-300">Email</th>
-                  <th className="py-4 px-6 text-sm font-semibold text-gray-600 dark:text-gray-300">Papel (Role)</th>
-                  <th className="py-4 px-6 text-sm font-semibold text-gray-600 dark:text-gray-300 text-right">Ações</th>
+                <tr className="bg-sunken border-b border-line">
+                  <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400">Nome</th>
+                  <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400">Email</th>
+                  <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400">Papel (Role)</th>
+                  <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={4} className="py-8 text-center text-ink-400">
                       Nenhum usuário encontrado.
                     </td>
                   </tr>
                 ) : (
                   users.map((u) => (
-                    <tr key={u._id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                      <td className="py-3 px-6">
+                    <tr key={u._id} className="border-b border-line-subtle hover:bg-hover transition-colors group">
+                      <td className="py-3 px-4">
                         {editingId === u._id ? (
                           <input
                             type="text"
                             value={editData.name}
                             onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                            className="w-full border border-indigo-300 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="w-full rounded-md border border-brand bg-surface px-2 py-1 text-sm text-ink-900 outline-none focus:ring-[3px] focus:ring-focus"
                             autoFocus
                           />
                         ) : (
-                          <span className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
+                          <span className="font-medium text-ink-900 flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-brand text-on-brand flex items-center justify-center text-xs font-bold">
                               {u.name.substring(0, 2).toUpperCase()}
                             </div>
                             {u.name}
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-6 text-gray-600 dark:text-gray-400">
+                      <td className="py-3 px-4 text-ink-500">
                         {editingId === u._id ? (
                           <input
                             type="email"
                             value={editData.email}
                             onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                            className="w-full border border-indigo-300 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="w-full rounded-md border border-brand bg-surface px-2 py-1 text-sm text-ink-900 outline-none focus:ring-[3px] focus:ring-focus"
                           />
                         ) : (
                           u.email
                         )}
                       </td>
-                      <td className="py-3 px-6">
+                      <td className="py-3 px-4">
                         {editingId === u._id ? (
-                          <select
+                          <Select
                             value={editData.role}
                             onChange={(e) => setEditData({ ...editData, role: e.target.value })}
-                            className="border border-indigo-300 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           >
                             <option value="USER">USER</option>
                             <option value="ADMIN">ADMIN</option>
-                          </select>
+                          </Select>
                         ) : (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
+                          <Badge variant={u.role === 'ADMIN' ? 'brand' : 'neutral'} withDot={false}>
                             {u.role}
-                          </span>
+                          </Badge>
                         )}
                       </td>
-                      <td className="py-3 px-6 text-right">
+                      <td className="py-3 px-4 text-right">
                         {editingId === u._id ? (
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => saveEdit(u._id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Salvar">
-                              <Check className="w-4 h-4" />
+                          <div className="flex justify-end gap-1">
+                            <button onClick={() => saveEdit(u._id)} className="p-1.5 text-success-fg hover:bg-success-bg rounded-md transition-colors" title="Salvar">
+                              <Check size={16} />
                             </button>
-                            <button onClick={cancelEdit} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Cancelar">
-                              <X className="w-4 h-4" />
+                            <button onClick={cancelEdit} className="p-1.5 text-danger-fg hover:bg-danger-bg rounded-md transition-colors" title="Cancelar">
+                              <X size={16} />
                             </button>
                           </div>
                         ) : (
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => startEdit(u)} className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded" title="Editar">
-                              <Edit2 className="w-4 h-4" />
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => startEdit(u)} className="p-1.5 text-ink-400 hover:text-brand hover:bg-brand-tint rounded-md disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Editar">
+                              <Edit2 size={16} />
                             </button>
                             {currentUser.id !== u._id && (
-                              <button onClick={() => handleDelete(u._id)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded" title="Remover">
-                                <Trash2 className="w-4 h-4" />
+                              <button onClick={() => handleDelete(u._id)} className="p-1.5 text-ink-400 hover:text-danger-fg hover:bg-danger-bg rounded-md disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Remover">
+                                <Trash2 size={16} />
                               </button>
                             )}
                           </div>
@@ -227,99 +218,58 @@ export const ManageUsers: React.FC = () => {
                 )}
               </tbody>
             </table>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </Card>
 
       {/* Modal de Criação */}
-      {isModalOpen && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Novo Usuário</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              {formError && (
-                <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded text-sm">
-                  {formError}
-                </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
-                <input
-                  type="text"
-                  autoFocus
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white"
-                />
-              </div>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={<span className="flex items-center gap-2"><UserPlus className="text-brand" size={20} /> Novo Usuário</span>}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button variant="secondary" onClick={() => handleCreate(false)} disabled={formLoading}>Criar</Button>
+            <Button variant="primary" onClick={() => handleCreate(true)} disabled={formLoading}>Criar e fechar</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {formError && <Alert variant="danger">{formError}</Alert>}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white"
-                />
-              </div>
+          <Input
+            label="Nome Completo"
+            type="text"
+            autoFocus
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha Inicial</label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white"
-                />
-              </div>
+          <Input
+            label="E-mail"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Papel (Role)</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white"
-                >
-                  <option value="USER">USER (Comum)</option>
-                  <option value="ADMIN">ADMIN (Administrador)</option>
-                </select>
-              </div>
-            </div>
+          <Input
+            label="Senha Inicial"
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          />
 
-            <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3 bg-gray-50 dark:bg-gray-800/50">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleCreate(false)}
-                disabled={formLoading}
-                className="px-4 py-2 text-sm font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900 rounded-md transition-colors disabled:opacity-50"
-              >
-                Create
-              </button>
-              <button
-                onClick={() => handleCreate(true)}
-                disabled={formLoading}
-                className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-md transition-colors disabled:opacity-50"
-              >
-                Create and Close
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
+          <Select
+            label="Papel (Role)"
+            value={formData.role}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          >
+            <option value="USER">USER (Comum)</option>
+            <option value="ADMIN">ADMIN (Administrador)</option>
+          </Select>
+        </div>
+      </Modal>
     </div>
   );
 };
