@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { userApi, handleApiError } from '../services/api';
 import { User, Key, Save, Lock } from 'lucide-react';
+import { Alert, Button, Card, CardBody, Input } from '../components/ui';
 
 export const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -71,158 +72,124 @@ export const Profile: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 p-8 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+    <div className="overflow-y-auto">
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meu Perfil</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Gerencie suas informações pessoais e segurança da conta.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-ink-900">Meu Perfil</h1>
+          <p className="text-ink-500 mt-1">Gerencie suas informações pessoais e a segurança da conta.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
+
           {/* Informações Pessoais */}
           <div className="md:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2 mb-6">
-                <User className="w-5 h-5 text-indigo-500" />
-                Informações Pessoais
-              </h2>
-              
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                {message && (
-                  <div className={`p-4 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                    {message.text}
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-6 mb-6">
-                  {photoUrl ? (
-                    <img src={photoUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100 dark:border-indigo-900" />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold shadow-md">
-                      {getInitials(name)}
-                    </div>
+            <Card>
+              <CardBody className="p-6">
+                <h2 className="text-lg font-semibold text-ink-900 flex items-center gap-2 mb-6">
+                  <User className="text-brand" size={20} strokeWidth={1.5} />
+                  Informações Pessoais
+                </h2>
+
+                <form onSubmit={handleUpdateProfile} className="space-y-5">
+                  {message && (
+                    <Alert variant={message.type === 'success' ? 'success' : 'danger'}>{message.text}</Alert>
                   )}
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      URL da Foto de Perfil (Opcional)
-                    </label>
-                    <input
+
+                  <div className="flex items-center gap-6">
+                    {photoUrl ? (
+                      <img src={photoUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover border border-line" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-brand flex items-center justify-center text-on-brand text-2xl font-bold">
+                        {getInitials(name)}
+                      </div>
+                    )}
+                    <Input
+                      containerClassName="flex-1"
+                      label="URL da Foto de Perfil (opcional)"
                       type="url"
                       value={photoUrl}
                       onChange={(e) => setPhotoUrl(e.target.value)}
                       placeholder="https://exemplo.com/minha-foto.jpg"
-                      className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Nome Completo
-                  </label>
-                  <input
+                  <Input
+                    label="Nome Completo"
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white"
                   />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    E-mail
-                  </label>
-                  <input
+                  <Input
+                    label="E-mail"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:text-white"
                   />
-                </div>
 
-                <div className="flex justify-end pt-4">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                  >
-                    <Save className="w-4 h-4" />
-                    {loading ? 'Salvando...' : 'Salvar Alterações'}
-                  </button>
-                </div>
-              </form>
-            </div>
+                  <div className="flex justify-end pt-2">
+                    <Button type="submit" variant="primary" loading={loading} leftIcon={<Save size={16} strokeWidth={2} />}>
+                      {loading ? 'Salvando...' : 'Salvar Alterações'}
+                    </Button>
+                  </div>
+                </form>
+              </CardBody>
+            </Card>
           </div>
 
           {/* Segurança */}
           <div className="md:col-span-1 space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2 mb-6">
-                <Lock className="w-5 h-5 text-rose-500" />
-                Segurança
-              </h2>
+            <Card>
+              <CardBody className="p-6">
+                <h2 className="text-lg font-semibold text-ink-900 flex items-center gap-2 mb-6">
+                  <Lock className="text-ink-500" size={20} strokeWidth={1.5} />
+                  Segurança
+                </h2>
 
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                {pwdMessage && (
-                  <div className={`p-3 rounded-md text-sm ${pwdMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                    {pwdMessage.text}
-                  </div>
-                )}
+                <form onSubmit={handleUpdatePassword} className="space-y-5">
+                  {pwdMessage && (
+                    <Alert variant={pwdMessage.type === 'success' ? 'success' : 'danger'}>{pwdMessage.text}</Alert>
+                  )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Senha Atual
-                  </label>
-                  <input
+                  <Input
+                    label="Senha Atual"
                     type="password"
                     required
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
                   />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Nova Senha
-                  </label>
-                  <input
+                  <Input
+                    label="Nova Senha"
                     type="password"
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
+                    helperText="Mínimo de 6 caracteres."
                   />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Confirmar Nova Senha
-                  </label>
-                  <input
+                  <Input
+                    label="Confirmar Nova Senha"
                     type="password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 dark:text-white"
                   />
-                </div>
 
-                <div className="flex justify-end pt-4">
-                  <button
+                  <Button
                     type="submit"
-                    disabled={pwdLoading}
-                    className="flex items-center gap-2 bg-rose-600 text-white px-4 py-2 rounded-md hover:bg-rose-700 disabled:opacity-50 transition-colors w-full justify-center"
+                    variant="secondary"
+                    fullWidth
+                    loading={pwdLoading}
+                    leftIcon={<Key size={16} strokeWidth={2} />}
                   >
-                    <Key className="w-4 h-4" />
                     {pwdLoading ? 'Atualizando...' : 'Alterar Senha'}
-                  </button>
-                </div>
-              </form>
-            </div>
+                  </Button>
+                </form>
+              </CardBody>
+            </Card>
           </div>
 
         </div>
