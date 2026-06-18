@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Application, Module, Incident, Action, Tag, TagCategory, Closure } from '../types/index';
+import { Application, Module, Incident, Action, Tag, TagCategory, Closure, ImportResponse } from '../types/index';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
 
@@ -68,7 +68,7 @@ export const tagApi = {
 };
 
 export const importApi = {
-  importCsv: (csvData: string) => api.post<{ message: string }>('/import', { csvData })
+  importCsv: (csvData: string) => api.post<ImportResponse>('/import', { csvData })
 };
 
 export const closureApi = {
