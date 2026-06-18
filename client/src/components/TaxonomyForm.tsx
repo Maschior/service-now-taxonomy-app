@@ -551,8 +551,8 @@ export default function TaxonomyForm() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <Sparkles size={32} className="animate-pulse" style={{ color: 'var(--accent-primary)' }} />
-          <span style={{ color: 'var(--text-muted)' }}>Carregando dados...</span>
+          <Sparkles size={32} className="animate-pulse" style={{ color: 'var(--brand)' }} />
+          <span style={{ color: 'var(--ink-400)' }}>Carregando dados...</span>
         </div>
       </div>
     );
@@ -563,44 +563,44 @@ export default function TaxonomyForm() {
       {/* Modal de Atalhos */}
       {isShortcutsModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="p-6 rounded-2xl w-full max-w-md animate-fade-in-up border shadow-2xl" 
-               style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-secondary)' }}>
+          <div className="p-6 rounded-2xl w-full max-w-md animate-fade-in-up border shadow-2xl"
+               style={{ background: 'var(--bg-page)', borderColor: 'var(--border-strong)' }}>
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <Keyboard size={20} className="text-[var(--accent-primary)]" />
+              <Keyboard size={20} className="text-[var(--brand)]" />
               Atalhos de Teclado
             </h3>
             
             <div className="space-y-3 mb-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Salvar Fechamento</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--ink-500)' }}>Salvar Fechamento</span>
                 <div className="flex gap-1">
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Ctrl</kbd>
-                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>S</kbd>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>Ctrl</kbd>
+                  <span className="text-[var(--ink-400)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>S</kbd>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Nova Aba</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--ink-500)' }}>Nova Aba</span>
                 <div className="flex gap-1">
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Alt</kbd>
-                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>T</kbd>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>Alt</kbd>
+                  <span className="text-[var(--ink-400)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>T</kbd>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Fechar Aba Atual</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--ink-500)' }}>Fechar Aba Atual</span>
                 <div className="flex gap-1">
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Alt</kbd>
-                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>W</kbd>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>Alt</kbd>
+                  <span className="text-[var(--ink-400)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>W</kbd>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Mudar de Aba</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--ink-500)' }}>Mudar de Aba</span>
                 <div className="flex gap-1">
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>Alt</kbd>
-                  <span className="text-[var(--text-muted)] font-bold px-1 flex items-center">+</span>
-                  <kbd className="px-2 py-1 bg-black/5 dark:bg-white/10 rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--text-primary)', border: '1px solid var(--border-secondary)' }}>1-9</kbd>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>Alt</kbd>
+                  <span className="text-[var(--ink-400)] font-bold px-1 flex items-center">+</span>
+                  <kbd className="px-2 py-1 bg-sunken rounded-md text-xs font-mono font-bold shadow-sm" style={{ color: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}>1-9</kbd>
                 </div>
               </div>
             </div>
@@ -621,10 +621,10 @@ export default function TaxonomyForm() {
       {/* Modal Confirmação de Limpeza */}
       {isConfirmClearModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="p-6 rounded-2xl w-full max-w-md animate-fade-in-up border shadow-2xl" 
-               style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-secondary)' }}>
+          <div className="p-6 rounded-2xl w-full max-w-md animate-fade-in-up border shadow-2xl"
+               style={{ background: 'var(--bg-page)', borderColor: 'var(--border-strong)' }}>
             <h3 className="text-lg font-bold mb-2">Atenção</h3>
-            <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm mb-6" style={{ color: 'var(--ink-500)' }}>
               Deseja registrar o fechamento antes de limpar os campos?
             </p>
             <div className="flex flex-col sm:flex-row justify-end gap-3">
@@ -636,7 +636,7 @@ export default function TaxonomyForm() {
               </button>
               <button 
                 onClick={() => executeClearAll(false)}
-                className="btn-ghost text-sm px-4 py-2 text-red-500 hover:bg-red-500/10 hover:text-red-600 hover:border-red-200"
+                className="btn-ghost text-sm px-4 py-2 text-danger-fg hover:bg-danger-bg hover:text-danger-fg hover:border-danger-fg"
               >
                 Apenas Limpar
               </button>
@@ -661,11 +661,11 @@ export default function TaxonomyForm() {
         {/* Short Description (Middle) + Action Buttons (Right) */}
         <div className="flex-1 flex flex-col md:flex-row items-stretch md:items-center gap-3">
           {/* Short Description Bar */}
-          <div className="flex-1 flex items-center gap-3 px-3.5 py-2 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', minWidth: 0 }}>
-            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+          <div className="flex-1 flex items-center gap-3 px-3.5 py-2 rounded-xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minWidth: 0 }}>
+            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--ink-400)' }}>
               Short Description:
             </span>
-            <span className="font-mono text-xs font-semibold truncate flex-1" style={{ color: shortDescription ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+            <span className="font-mono text-xs font-semibold truncate flex-1" style={{ color: shortDescription ? 'var(--ink-900)' : 'var(--ink-400)' }}>
               {shortDescription || "Aguardando seleções..."}
             </span>
             <button
@@ -673,8 +673,8 @@ export default function TaxonomyForm() {
               disabled={!shortDescription}
               className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-all duration-200"
               style={{
-                color: !shortDescription ? 'var(--text-muted)' : copiedStates.short ? 'var(--success-color)' : 'var(--accent-primary)',
-                background: !shortDescription ? 'transparent' : copiedStates.short ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
+                color: !shortDescription ? 'var(--ink-400)' : copiedStates.short ? 'var(--success-fg)' : 'var(--brand)',
+                background: !shortDescription ? 'transparent' : copiedStates.short ? 'var(--success-bg)' : 'var(--brand-tint)',
                 opacity: !shortDescription ? 0.5 : 1,
                 cursor: !shortDescription ? 'not-allowed' : 'pointer'
               }}
@@ -691,8 +691,8 @@ export default function TaxonomyForm() {
               disabled={savingClosure || isFormIncomplete}
               className="flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-lg transition-all duration-200"
               style={{
-                color: closureSaved ? 'var(--success-color)' : 'var(--accent-primary)',
-                background: closureSaved ? 'var(--success-bg)' : 'var(--accent-primary-bg)',
+                color: closureSaved ? 'var(--success-fg)' : 'var(--brand)',
+                background: closureSaved ? 'var(--success-bg)' : 'var(--brand-tint)',
                 opacity: (savingClosure || isFormIncomplete) && !closureSaved ? 0.4 : 1,
                 cursor: savingClosure ? 'wait' : isFormIncomplete ? 'not-allowed' : 'pointer',
               }}
@@ -708,7 +708,7 @@ export default function TaxonomyForm() {
             <button onClick={handleClearAll} className="btn-ghost text-xs px-3.5 py-2">
               Limpar Tudo
             </button>
-            <div className="w-px h-5 mx-1" style={{ background: 'var(--border-primary)' }} />
+            <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
             <button
               onClick={() => setIsShortcutsModalOpen(true)}
               className="flex items-center justify-center btn-ghost text-xs px-2 py-2"
@@ -738,9 +738,9 @@ export default function TaxonomyForm() {
 
       {error && (
         <div className="section-card mb-4 flex items-center gap-2 py-2"
-          style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
-          <AlertCircle size={16} style={{ color: '#ef4444' }} />
-          <span style={{ color: '#ef4444' }} className="text-sm">{error}</span>
+          style={{ borderColor: 'var(--danger-border)', background: 'var(--danger-bg)' }}>
+          <AlertCircle size={16} style={{ color: 'var(--danger-fg)' }} />
+          <span style={{ color: 'var(--danger-fg)' }} className="text-sm">{error}</span>
         </div>
       )}
 
@@ -754,15 +754,15 @@ export default function TaxonomyForm() {
             <div className="output-panel">
               <div className="output-panel-header">
                 <div className="flex items-center gap-2">
-                  <AlertCircle size={14} style={{ color: 'var(--accent-secondary)' }} />
-                  <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Resolution Notes</span>
+                  <AlertCircle size={14} style={{ color: 'var(--brand)' }} />
+                  <span className="text-xs font-semibold" style={{ color: 'var(--ink-400)' }}>Resolution Notes</span>
                 </div>
                 <button
                   onClick={() => handleCopy(resolutionNotes, 'resolution')}
                   className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
                   style={{
-                    color: copiedStates.resolution ? '#22c55e' : 'var(--accent-secondary)',
-                    background: copiedStates.resolution ? 'rgba(34, 197, 94, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                    color: copiedStates.resolution ? 'var(--success-fg)' : 'var(--brand)',
+                    background: copiedStates.resolution ? 'var(--success-bg)' : 'var(--brand-tint)',
                   }}
                 >
                   {copiedStates.resolution ? <Check size={12} /> : <Clipboard size={12} />}
@@ -770,7 +770,7 @@ export default function TaxonomyForm() {
                 </button>
               </div>
               <div className="p-5">
-                <pre className="font-mono text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--text-primary)' }}>
+                <pre className="font-mono text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--ink-900)' }}>
                   {resolutionNotes}
                 </pre>
               </div>
@@ -778,18 +778,18 @@ export default function TaxonomyForm() {
 
             {/* Tags & Categorias */}
             <div className="section-card flex flex-col">
-              <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-                <div className="p-1.5 rounded-lg" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
-                  <Tag size={16} style={{ color: 'var(--accent-tertiary)' }} />
+              <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="p-1.5 rounded-lg" style={{ background: 'var(--brand-tint)' }}>
+                  <Tag size={16} style={{ color: 'var(--brand)' }} />
                 </div>
-                <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <h2 className="text-sm font-semibold" style={{ color: 'var(--ink-900)' }}>
                   Classificação (Tags)
                 </h2>
               </div>
 
               <div className="space-y-4 flex-1 flex flex-col min-h-0">
                 <div className="flex flex-col min-h-0">
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>
                     Categorias
                   </label>
                   <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[60px] p-1">
@@ -806,8 +806,8 @@ export default function TaxonomyForm() {
                 </div>
 
                 <div className="flex-1 flex flex-col min-h-0">
-                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Tags {selectedTags.length > 0 && <span style={{ color: 'var(--accent-secondary)' }}>({selectedTags.length})</span>}
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>
+                    Tags {selectedTags.length > 0 && <span style={{ color: 'var(--brand)' }}>({selectedTags.length})</span>}
                   </label>
                   <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[400px] p-1 min-h-[28px]">
                     {visibleTags.length > 0 ? (
@@ -821,7 +821,7 @@ export default function TaxonomyForm() {
                         </button>
                       ))
                     ) : (
-                      <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                      <span className="text-xs italic" style={{ color: 'var(--ink-400)' }}>
                         {activeCategories.length === 0 ? 'Filtre por categoria acima.' : 'Vazio.'}
                       </span>
                     )}
@@ -840,7 +840,7 @@ export default function TaxonomyForm() {
           <div className="section-card">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Motivo</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>Motivo</label>
                 <textarea
                   value={motivo}
                   onChange={(e) => updateActiveTab({ motivo: e.target.value })}
@@ -849,7 +849,7 @@ export default function TaxonomyForm() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Análise</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>Análise</label>
                 <textarea
                   value={analise}
                   onChange={(e) => updateActiveTab({ analise: e.target.value })}
@@ -858,7 +858,7 @@ export default function TaxonomyForm() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Solução</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>Solução</label>
                 <textarea
                   value={solucao}
                   onChange={(e) => updateActiveTab({ solucao: e.target.value })}
@@ -871,11 +871,11 @@ export default function TaxonomyForm() {
           
           {/* Contexto (Application chips + Module chips) */}
           <div className="section-card flex flex-col">
-            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-              <div className="p-1.5 rounded-lg" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
-                <LayoutTemplate size={16} style={{ color: 'var(--accent-primary)' }} />
+            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--brand-tint)' }}>
+                <LayoutTemplate size={16} style={{ color: 'var(--brand)' }} />
               </div>
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink-900)' }}>
                 1. Contexto
               </h2>
             </div>
@@ -883,17 +883,17 @@ export default function TaxonomyForm() {
             <div className="space-y-4 flex-1 flex flex-col min-h-0">
               {/* Application Chips */}
               <div>
-                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>
                   <span>Aplicação</span>
                   <div className="relative">
-                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-400)' }} />
                     <input
                       type="text"
                       placeholder="Pesquisar..."
                       value={appSearch}
                       onChange={e => setAppSearch(e.target.value)}
                       className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
-                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                      style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
                 </label>
@@ -906,7 +906,7 @@ export default function TaxonomyForm() {
                         className={`chip text-xs px-2.5 py-1 ${selectedApp === a._id ? 'active' : ''}`}
                         style={
                           selectedApp !== a._id && highlightedAppIds.has(a._id)
-                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                            ? { borderColor: 'var(--brand)', color: 'var(--brand)' }
                             : {}
                         }
                       >
@@ -914,7 +914,7 @@ export default function TaxonomyForm() {
                       </button>
                     ))
                   ) : (
-                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                    <span className="text-xs italic" style={{ color: 'var(--ink-400)' }}>
                       Nenhuma aplicação encontrada.
                     </span>
                   )}
@@ -923,20 +923,20 @@ export default function TaxonomyForm() {
 
               {/* Module Chips (Grouped by Name) */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>
                   <span>
                     Módulo
-                    {!selectedApp && <span style={{ color: 'var(--text-muted)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
+                    {!selectedApp && <span style={{ color: 'var(--ink-400)' }} className="font-normal ml-1">(selecione a aplicação)</span>}
                   </span>
                   <div className="relative">
-                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-400)' }} />
                     <input
                       type="text"
                       placeholder="Pesquisar..."
                       value={moduleSearch}
                       onChange={e => setModuleSearch(e.target.value)}
                       className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
-                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                      style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
                 </label>
@@ -949,7 +949,7 @@ export default function TaxonomyForm() {
                         className={`chip text-xs px-2.5 py-1 ${selectedModuleName === name ? 'active' : ''}`}
                         style={
                           selectedModuleName !== name && highlightedModuleNames.has(name)
-                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                            ? { borderColor: 'var(--brand)', color: 'var(--brand)' }
                             : {}
                         }
                       >
@@ -957,7 +957,7 @@ export default function TaxonomyForm() {
                       </button>
                     ))
                   ) : (
-                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                    <span className="text-xs italic" style={{ color: 'var(--ink-400)' }}>
                       {selectedApp ? 'Nenhum módulo encontrado.' : 'Aguardando seleção...'}
                     </span>
                   )}
@@ -968,11 +968,11 @@ export default function TaxonomyForm() {
 
           {/* MIDDLE: Incidents & Actions (Full Width) */}
           <div className="section-card flex flex-col">
-            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-primary)' }}>
-              <div className="p-1.5 rounded-lg" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                <Wrench size={16} style={{ color: 'var(--accent-secondary)' }} />
+            <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="p-1.5 rounded-lg" style={{ background: 'var(--brand-tint)' }}>
+                <Wrench size={16} style={{ color: 'var(--brand)' }} />
               </div>
-              <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h2 className="text-sm font-semibold" style={{ color: 'var(--ink-900)' }}>
                 2. Problema e Resolução (Selecione a ação e o incidente)
               </h2>
             </div>
@@ -980,17 +980,17 @@ export default function TaxonomyForm() {
             <div className="space-y-4 flex-1 flex flex-col min-h-0">
               {/* Incidents */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>
                   <span>Incidente Relatado</span>
                   <div className="relative">
-                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-400)' }} />
                     <input
                       type="text"
                       placeholder="Pesquisar..."
                       value={incidentSearch}
                       onChange={e => setIncidentSearch(e.target.value)}
                       className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
-                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                      style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
                 </label>
@@ -1003,7 +1003,7 @@ export default function TaxonomyForm() {
                         className={`chip text-xs px-2.5 py-1 ${selectedIncident === i._id ? 'active' : ''}`}
                         style={
                           selectedIncident !== i._id && highlightedIncidentIds.has(i._id)
-                            ? { borderColor: 'var(--accent-tertiary)', color: 'var(--accent-tertiary)' }
+                            ? { borderColor: 'var(--brand)', color: 'var(--brand)' }
                             : {}
                         }
                       >
@@ -1011,24 +1011,24 @@ export default function TaxonomyForm() {
                       </button>
                     ))
                   ) : (
-                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
+                    <span className="text-xs italic" style={{ color: 'var(--ink-400)' }}>Aguardando seleção...</span>
                   )}
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex-1 flex flex-col min-h-0">
-                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>
                   <span>Ação Tomada</span>
                   <div className="relative">
-                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--ink-400)' }} />
                     <input
                       type="text"
                       placeholder="Pesquisar..."
                       value={actionSearch}
                       onChange={e => setActionSearch(e.target.value)}
                       className="pl-5 pr-2 py-0.5 text-xs rounded border bg-transparent focus:outline-none"
-                      style={{ width: '120px', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                      style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
                 </label>
@@ -1044,7 +1044,7 @@ export default function TaxonomyForm() {
                       </button>
                     ))
                   ) : (
-                    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>Aguardando seleção...</span>
+                    <span className="text-xs italic" style={{ color: 'var(--ink-400)' }}>Aguardando seleção...</span>
                   )}
                 </div>
               </div>
