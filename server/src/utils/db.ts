@@ -8,8 +8,12 @@ export const connectDB = async () => {
     let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/taxonomy-app';
 
     if (process.env.USE_MEMORY_DB === 'true') {
-      console.log('Starting MongoDB Memory Server...');
-      mongoServer = await MongoMemoryServer.create();
+      console.log('Starting MongoDB Memory Server (first time may take 30-60 seconds)...');
+      mongoServer = await MongoMemoryServer.create({
+        instance: {
+          port: 27017 // Use random port
+        }
+      });
       mongoUri = mongoServer.getUri();
     }
 
