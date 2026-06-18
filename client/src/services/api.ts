@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Application, Module, Incident, Action, Tag, TagCategory, Closure, ImportResponse } from '../types/index';
+import { Application, Module, Incident, Action, Tag, TagCategory, Closure, ImportResponse, Workspace } from '../types/index';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
 
@@ -97,6 +97,13 @@ export const userApi = {
   create: (data: any) => api.post<any>('/users', data),
   update: (id: string, data: any) => api.put<any>(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`)
+};
+
+export const workspaceApi = {
+  getAll: () => api.get<Workspace[]>('/workspaces'),
+  create: (data: { name: string }) => api.post<Workspace>('/workspaces', data),
+  update: (id: string, data: { name: string }) => api.put<Workspace>(`/workspaces/${id}`, data),
+  delete: (id: string) => api.delete(`/workspaces/${id}`)
 };
 
 export const handleApiError = (error: unknown): string => {

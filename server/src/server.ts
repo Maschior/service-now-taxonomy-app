@@ -16,6 +16,7 @@ import importRouter from './routes/import.js';
 import closuresRouter from './routes/closures.js';
 import authRouter from './routes/auth.js';
 import usersRouter from './routes/users.js';
+import workspacesRouter from './routes/workspaces.js';
 
 dotenv.config();
 
@@ -26,8 +27,12 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:5005',
-  'http://10.133.58.129:5173'
-  'http://cbzlmdaassup06:5173'
+  'http://10.133.58.129:5173',
+  'http://10.133.58.129:3000',
+  'http://10.133.58.129:5005',
+  'http://cbzlmdaassup06:5173',
+  'http://cbzlmdaassup06:3000',
+  'http://cbzlmdaassup06:5005'
 ];
 
 app.use(cors({
@@ -57,6 +62,7 @@ app.use('/api/import', importRouter);
 app.use('/api/closures', closuresRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/workspaces', workspacesRouter);
 
 app.use(errorHandler);
 

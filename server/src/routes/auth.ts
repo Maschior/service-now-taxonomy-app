@@ -21,7 +21,8 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { email, password, rememberMe } = req.body;
-      const user = await User.findOne({ email }).populate('workspaces');
+      const normalizedEmail = email.trim().toLowerCase();
+      const user = await User.findOne({ email: normalizedEmail }).populate('workspaces');
       if (!user) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -65,8 +66,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { email, password, name } = req.body;
-      
-      const existingUser = await User.findOne({ email });
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const existingUser = await User.findOne({ email: normalizedEmail });
       if (existingUser) {
         return res.status(400).json({ error: 'Email already exists' });
       }
@@ -78,7 +80,7 @@ router.post(
       const workspaces = globalWorkspace ? [globalWorkspace._id] : [];
 
       const user = await User.create({
-        email,
+        email: normalizedEmail,
         passwordHash,
         name,
         role: 'USER',

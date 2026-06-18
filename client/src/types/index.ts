@@ -92,3 +92,12 @@ export interface ImportResponse {
   skipped: number;
   errors?: string[];
 }
+
+export interface Workspace {
+  _id: string;
+  name: string;
+  isGlobal: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

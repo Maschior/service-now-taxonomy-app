@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, ClipboardList, Shield, LayoutTemplate,
   AlertTriangle, Wrench, Tags, Menu, X,
-  ChevronLeft, ChevronRight, Users, LogOut, User as UserIcon, MoreVertical
+  ChevronLeft, ChevronRight, Users, LogOut, User as UserIcon, MoreVertical, Building2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,6 +33,7 @@ export default function Sidebar() {
     { path: '/manage/actions', label: 'Ações', icon: ClipboardList },
     { path: '/manage/tags', label: 'Tags', icon: Tags },
     ...(user?.role === 'ADMIN' ? [{ path: '/manage/users', label: 'Usuários', icon: Users }] : []),
+    ...(user?.role === 'ADMIN' ? [{ path: '/manage/workspaces', label: 'Workspaces', icon: Building2 }] : []),
   ];
 
   const navItemClass = (path: string) => {

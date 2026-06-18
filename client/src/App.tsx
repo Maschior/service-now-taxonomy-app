@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import { Profile } from './pages/Profile';
 import { ManageUsers } from './components/ManageUsers';
+import { ManageWorkspaces } from './components/ManageWorkspaces';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuth();
@@ -74,6 +75,7 @@ function App() {
                 <Route path="/manage/actions" element={<ProtectedRoute><ThreeColumnLayout><ManageActions /></ThreeColumnLayout></ProtectedRoute>} />
                 <Route path="/manage/tags" element={<ProtectedRoute><ThreeColumnLayout><ManageTags /></ThreeColumnLayout></ProtectedRoute>} />
                 <Route path="/manage/users" element={<AdminRoute><ThreeColumnLayout><ManageUsers /></ThreeColumnLayout></AdminRoute>} />
+                <Route path="/manage/workspaces" element={<AdminRoute><ThreeColumnLayout><ManageWorkspaces /></ThreeColumnLayout></AdminRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ThreeColumnLayout><Profile /></ThreeColumnLayout></ProtectedRoute>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

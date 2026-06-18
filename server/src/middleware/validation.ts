@@ -50,6 +50,10 @@ export const closureValidation = [
   body('solucao').optional().trim()
 ];
 
+export const workspaceValidation = [
+  body('name').trim().notEmpty().withMessage('Workspace name is required')
+];
+
 export const idValidation = [
   param('id').isMongoId().withMessage('Valid ID is required')
 ];
