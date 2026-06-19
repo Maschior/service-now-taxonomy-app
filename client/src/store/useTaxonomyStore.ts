@@ -52,7 +52,7 @@ const initialFormData: TaxonomyFormData = {
 };
 
 const createNewTab = (title: string = 'Novo Chamado'): Tab => ({
-  id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9),
+  id: crypto.randomUUID(),
   title,
   isSaved: false,
   data: { ...initialFormData },

@@ -5,7 +5,7 @@ import Workspace from '../models/Workspace.js';
 import { body } from 'express-validator';
 import { validateRequest, idValidation } from '../middleware/validation.js';
 import { ApiError } from '../middleware/errorHandler.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
 
 const router = Router();
@@ -75,13 +75,6 @@ router.put('/me/password', [
 // ==========================================
 // ROTA DE GERENCIAMENTO (Restrito a ADMINs)
 // ==========================================
-
-const requireAdmin = (req: WorkspaceRequest, res: Response, next: NextFunction) => {
-  if (req.user?.role !== 'ADMIN') {
-    return next(new ApiError(403, 'Apenas administradores podem gerenciar usuários.'));
-  }
-  next();
-};
 
 // Conjunto de workspaces que o admin logado tem permissão de atribuir a outros usuários.
 // - Admin no contexto Global: pode atribuir qualquer workspace ativo.
