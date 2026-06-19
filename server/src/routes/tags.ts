@@ -6,7 +6,7 @@ import { body } from 'express-validator';
 import { ApiError } from '../middleware/errorHandler.js';
 import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
 import { requireAuth } from '../middleware/auth.js';
-import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
+import { requireWorkspace, WorkspaceRequest, resolveWorkspaceScope, getVisibleWorkspaceIds } from '../middleware/workspace.js';
 
 const router = Router();
 
@@ -16,8 +16,9 @@ router.use(requireWorkspace);
 // Tag Category routes
 router.get('/categories', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
+    const workspaceIds = await resolveWorkspaceScope(req);
     const categories = await TagCategory.find({
-      workspaceId: { $in: req.accessibleWorkspaceIds },
+      workspaceId: { $in: workspaceIds },
       isActive: true
     }).sort({ name: 1 });
     res.json(categories);
@@ -62,7 +63,8 @@ router.put('/categories/:id', idValidation, [body('name').trim().notEmpty()], va
       throw new ApiError(403, 'Apenas administradores podem editar registros globais.');
     }
 
-    if (targetCat.workspaceId.toString() !== req.currentWorkspaceId && targetCat.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetCat.workspaceId.toString())) {
        throw new ApiError(403, 'Sem permissão para editar esta categoria.');
     }
 
@@ -90,7 +92,8 @@ router.delete('/categories/:id', idValidation, validateRequest, async (req: Work
       throw new ApiError(403, 'Apenas administradores podem excluir registros globais.');
     }
 
-    if (targetCat.workspaceId.toString() !== req.currentWorkspaceId && targetCat.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetCat.workspaceId.toString())) {
       throw new ApiError(403, 'Sem permissão para excluir esta categoria.');
     }
 
@@ -106,8 +109,9 @@ router.delete('/categories/:id', idValidation, validateRequest, async (req: Work
 // Tag routes
 router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
+    const workspaceIds = await resolveWorkspaceScope(req);
     const filter: any = {
-      workspaceId: { $in: req.accessibleWorkspaceIds },
+      workspaceId: { $in: workspaceIds },
       isActive: true
     };
     if (req.query.categoryId) {
@@ -158,7 +162,8 @@ router.put('/:id', idValidation, tagValidation, validateRequest, async (req: Wor
       throw new ApiError(403, 'Apenas administradores podem editar registros globais.');
     }
 
-    if (targetTag.workspaceId.toString() !== req.currentWorkspaceId && targetTag.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetTag.workspaceId.toString())) {
        throw new ApiError(403, 'Sem permissão para editar esta tag.');
     }
 
@@ -187,7 +192,8 @@ router.delete('/:id', idValidation, validateRequest, async (req: WorkspaceReques
       throw new ApiError(403, 'Apenas administradores podem excluir registros globais.');
     }
 
-    if (targetTag.workspaceId.toString() !== req.currentWorkspaceId && targetTag.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetTag.workspaceId.toString())) {
       throw new ApiError(403, 'Sem permissão para excluir esta tag.');
     }
 

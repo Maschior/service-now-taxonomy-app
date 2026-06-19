@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { tagApi, handleApiError } from '../services/api';
+import { tagApi, workspaceApi, handleApiError } from '../services/api';
 import { Tag, TagCategory } from '../types/index';
-import { Trash2, Plus, Tags, Edit, Globe, Home, Settings, Search } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Trash2, Plus, Tags, Edit, Globe, Home, Building2, Settings, Search } from 'lucide-react';
+import { useAuth, Workspace } from '../contexts/AuthContext';
+import { useIsGlobalContext } from '../hooks/useIsGlobalContext';
 import { Alert, Badge, Button, Card, Checkbox, Input, Modal, Select } from './ui';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
 export default function ManageTags() {
   const { user, currentWorkspaceId } = useAuth();
+  const isGlobalContext = useIsGlobalContext();
   const [tags, setTags] = useState<Tag[]>([]);
   const [categories, setCategories] = useState<TagCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +18,9 @@ export default function ManageTags() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [workspaceFilter, setWorkspaceFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
 
   // Tag Modal State
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
@@ -32,16 +36,29 @@ export default function ManageTags() {
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  // Lista de workspaces para o filtro/badges: admin no contexto Global vê todos os ativos; demais, só os seus.
+  const accessibleWorkspaces = isGlobalContext ? allWorkspaces : (user?.workspaces ?? []);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      workspaceApi.getAll().then((res) => setAllWorkspaces(res.data)).catch(() => {});
+    }
+  }, [user?.role]);
+
+  useEffect(() => {
+    setWorkspaceFilter('');
+  }, [currentWorkspaceId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [tagsRes, catsRes] = await Promise.all([
-        tagApi.getAll(),
-        tagApi.getCategories()
+        tagApi.getAll({ scope: 'all' }),
+        tagApi.getCategories({ scope: 'all' })
       ]);
       setTags(tagsRes.data);
       setCategories(catsRes.data);
@@ -119,7 +136,8 @@ export default function ManageTags() {
   const filteredItems = tags.filter(tag => {
     const matchesName = tag.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter ? getId(tag.categoryId) === categoryFilter : true;
-    return matchesName && matchesCategory;
+    const matchesWorkspace = !workspaceFilter || tag.workspaceId === workspaceFilter;
+    return matchesName && matchesCategory && matchesWorkspace;
   });
 
   const toggleSelectAll = () => {
@@ -216,6 +234,16 @@ export default function ManageTags() {
               onChange={(e) => setSearchTerm(e.target.value)}
               leftIcon={<Search size={16} strokeWidth={1.5} />}
             />
+            <Select
+              containerClassName="w-full md:w-56"
+              value={workspaceFilter}
+              onChange={(e) => setWorkspaceFilter(e.target.value)}
+            >
+              <option value="">Todos os Workspaces</option>
+              {accessibleWorkspaces.map((ws) => (
+                <option key={ws._id} value={ws._id}>{ws.name}{ws.isGlobal ? ' (Global)' : ''}</option>
+              ))}
+            </Select>
             {selectedIds.length > 0 && (
               <Button variant="danger" onClick={handleBulkDelete}>
                 Excluir ({selectedIds.length})
@@ -248,7 +276,11 @@ export default function ManageTags() {
               <tbody>
                 {filteredItems.map(tag => {
                   const isLocal = tag.workspaceId === currentWorkspaceId;
-                  const canEdit = isLocal || user?.role === 'ADMIN';
+                  const isGlobalItem = accessibleWorkspaces.find((w) => w._id === tag.workspaceId)?.isGlobal === true;
+                  const otherWorkspace = !isLocal && !isGlobalItem
+                    ? accessibleWorkspaces.find((w) => w._id === tag.workspaceId)
+                    : undefined;
+                  const canEdit = isGlobalItem ? user?.role === 'ADMIN' : true;
 
                   return (
                   <tr key={tag._id} className={`border-b border-line-subtle hover:bg-hover transition-colors group ${selectedIds.includes(tag._id) ? 'bg-brand-tint' : ''}`}>
@@ -260,9 +292,9 @@ export default function ManageTags() {
                       />
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant={isLocal ? 'neutral' : 'info'} withDot={false}>
-                        {isLocal ? <Home size={12} strokeWidth={1.7} /> : <Globe size={12} strokeWidth={1.7} />}
-                        {isLocal ? 'Local' : 'Global'}
+                      <Badge variant={isLocal ? 'neutral' : isGlobalItem ? 'info' : 'brand'} withDot={false}>
+                        {isLocal ? <Home size={12} strokeWidth={1.7} /> : isGlobalItem ? <Globe size={12} strokeWidth={1.7} /> : <Building2 size={12} strokeWidth={1.7} />}
+                        {isLocal ? 'Local' : isGlobalItem ? 'Global' : (otherWorkspace?.name ?? 'Outro Workspace')}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 font-medium text-ink-900">{tag.name}</td>
