@@ -9,7 +9,7 @@ export { Select } from './Select';
 export type { SelectProps, SelectOption } from './Select';
 export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
-export { Card, CardHeader, CardBody, CardFooter } from './Card';
+export { Card, CardBody } from './Card';
 export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeShape } from './Badge';
 export { Alert } from './Alert';

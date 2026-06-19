@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { moduleApi, applicationApi, handleApiError } from '../services/api';
+import { moduleApi, applicationApi, workspaceApi, handleApiError } from '../services/api';
 import { Module, Application } from '../types/index';
-import { Plus, X, Component, Edit2, Trash2, Globe, Home, Check, Search } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Plus, X, Component, Edit2, Trash2, Globe, Home, Building2, Check, Search } from 'lucide-react';
+import { useAuth, Workspace } from '../contexts/AuthContext';
+import { useIsGlobalContext } from '../hooks/useIsGlobalContext';
 import { Alert, Badge, Button, Card, Checkbox, Input, Modal, Select } from './ui';
 
 const getId = (item: any) => typeof item === 'object' && item !== null ? item._id : item;
 
 export default function ManageModules() {
   const { user, currentWorkspaceId } = useAuth();
+  const isGlobalContext = useIsGlobalContext();
   const [modules, setModules] = useState<Module[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +18,9 @@ export default function ManageModules() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [applicationFilter, setApplicationFilter] = useState('');
+  const [workspaceFilter, setWorkspaceFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,16 +33,29 @@ export default function ManageModules() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
+  // Lista de workspaces para o filtro/badges: admin no contexto Global vê todos os ativos; demais, só os seus.
+  const accessibleWorkspaces = isGlobalContext ? allWorkspaces : (user?.workspaces ?? []);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      workspaceApi.getAll().then((res) => setAllWorkspaces(res.data)).catch(() => {});
+    }
+  }, [user?.role]);
+
+  useEffect(() => {
+    setWorkspaceFilter('');
+  }, [currentWorkspaceId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [modsRes, appsRes] = await Promise.all([
-        moduleApi.getAll(),
-        applicationApi.getAll()
+        moduleApi.getAll({ scope: 'all' }),
+        applicationApi.getAll({ scope: 'all' })
       ]);
       setModules(modsRes.data);
       setApplications(appsRes.data);
@@ -109,7 +126,8 @@ export default function ManageModules() {
   const filteredItems = modules.filter(mod => {
     const matchesName = mod.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesApp = applicationFilter ? getId(mod.applicationId) === applicationFilter : true;
-    return matchesName && matchesApp;
+    const matchesWorkspace = !workspaceFilter || mod.workspaceId === workspaceFilter;
+    return matchesName && matchesApp && matchesWorkspace;
   });
 
   const toggleSelectAll = () => {
@@ -185,6 +203,16 @@ export default function ManageModules() {
               onChange={(e) => setSearchTerm(e.target.value)}
               leftIcon={<Search size={16} strokeWidth={1.5} />}
             />
+            <Select
+              containerClassName="w-full md:w-56"
+              value={workspaceFilter}
+              onChange={(e) => setWorkspaceFilter(e.target.value)}
+            >
+              <option value="">Todos os Workspaces</option>
+              {accessibleWorkspaces.map((ws) => (
+                <option key={ws._id} value={ws._id}>{ws.name}{ws.isGlobal ? ' (Global)' : ''}</option>
+              ))}
+            </Select>
             {selectedIds.length > 0 && (
               <Button variant="danger" onClick={handleBulkDelete}>
                 Excluir ({selectedIds.length})
@@ -216,7 +244,11 @@ export default function ManageModules() {
               <tbody>
                 {filteredItems.map(mod => {
                   const isLocal = mod.workspaceId === currentWorkspaceId;
-                  const canEdit = isLocal || user?.role === 'ADMIN';
+                  const isGlobalItem = accessibleWorkspaces.find((w) => w._id === mod.workspaceId)?.isGlobal === true;
+                  const otherWorkspace = !isLocal && !isGlobalItem
+                    ? accessibleWorkspaces.find((w) => w._id === mod.workspaceId)
+                    : undefined;
+                  const canEdit = isGlobalItem ? user?.role === 'ADMIN' : true;
 
                   return (
                   <tr key={mod._id} className={`border-b border-line-subtle hover:bg-hover transition-colors group ${selectedIds.includes(mod._id) ? 'bg-brand-tint' : ''}`}>
@@ -228,9 +260,9 @@ export default function ManageModules() {
                       />
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant={isLocal ? 'neutral' : 'info'} withDot={false}>
-                        {isLocal ? <Home size={12} strokeWidth={1.7} /> : <Globe size={12} strokeWidth={1.7} />}
-                        {isLocal ? 'Local' : 'Global'}
+                      <Badge variant={isLocal ? 'neutral' : isGlobalItem ? 'info' : 'brand'} withDot={false}>
+                        {isLocal ? <Home size={12} strokeWidth={1.7} /> : isGlobalItem ? <Globe size={12} strokeWidth={1.7} /> : <Building2 size={12} strokeWidth={1.7} />}
+                        {isLocal ? 'Local' : isGlobalItem ? 'Global' : (otherWorkspace?.name ?? 'Outro Workspace')}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 font-medium text-ink-900">

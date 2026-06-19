@@ -5,7 +5,7 @@ import { incidentValidation, idValidation, validateRequest } from '../middleware
 import { ApiError } from '../middleware/errorHandler.js';
 import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
 import { requireAuth } from '../middleware/auth.js';
-import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
+import { requireWorkspace, WorkspaceRequest, resolveWorkspaceScope, getVisibleWorkspaceIds } from '../middleware/workspace.js';
 
 const router = Router();
 
@@ -15,8 +15,9 @@ router.use(requireWorkspace);
 router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const { moduleId, moduleIds: moduleIdsParam, applicationId } = req.query;
+    const workspaceIds = await resolveWorkspaceScope(req);
     let filter: any = {
-      workspaceId: { $in: req.accessibleWorkspaceIds },
+      workspaceId: { $in: workspaceIds },
       isActive: true
     };
 
@@ -82,7 +83,8 @@ router.put('/:id', idValidation, incidentValidation, validateRequest, async (req
       throw new ApiError(403, 'Apenas administradores podem editar registros globais.');
     }
 
-    if (targetIncident.workspaceId.toString() !== req.currentWorkspaceId && targetIncident.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetIncident.workspaceId.toString())) {
        throw new ApiError(403, 'Sem permissão para editar este incidente.');
     }
 
@@ -111,7 +113,8 @@ router.delete('/:id', idValidation, validateRequest, async (req: WorkspaceReques
       throw new ApiError(403, 'Apenas administradores podem excluir registros globais.');
     }
 
-    if (targetIncident.workspaceId.toString() !== req.currentWorkspaceId && targetIncident.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetIncident.workspaceId.toString())) {
       throw new ApiError(403, 'Sem permissão para excluir este incidente.');
     }
 

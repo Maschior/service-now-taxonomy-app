@@ -25,23 +25,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export interface WorkspaceScopeParams {
+  scope?: 'all';
+  workspaceId?: string;
+}
+
 export const applicationApi = {
-  getAll: () => api.get<Application[]>('/applications'),
+  getAll: (params?: WorkspaceScopeParams) => api.get<Application[]>('/applications', { params }),
   create: (data: Partial<Application>) => api.post<Application>('/applications', data),
   update: (id: string, data: Partial<Application>) => api.put<Application>(`/applications/${id}`, data),
   delete: (id: string) => api.delete(`/applications/${id}`)
 };
 
 export const moduleApi = {
-  getAll: (applicationId?: string) =>
-    api.get<Module[]>('/modules', { params: { applicationId } }),
+  getAll: (params?: { applicationId?: string } & WorkspaceScopeParams) =>
+    api.get<Module[]>('/modules', { params }),
   create: (data: Partial<Module>) => api.post<Module>('/modules', data),
   update: (id: string, data: Partial<Module>) => api.put<Module>(`/modules/${id}`, data),
   delete: (id: string) => api.delete(`/modules/${id}`)
 };
 
 export const incidentApi = {
-  getAll: (params?: { moduleId?: string; applicationId?: string }) =>
+  getAll: (params?: { moduleId?: string; applicationId?: string } & WorkspaceScopeParams) =>
     api.get<Incident[]>('/incidents', { params }),
   create: (data: { name: string; moduleIds: string[] }) => api.post<Incident>('/incidents', data),
   update: (id: string, data: Partial<Incident>) => api.put<Incident>(`/incidents/${id}`, data),
@@ -49,7 +54,7 @@ export const incidentApi = {
 };
 
 export const actionApi = {
-  getAll: (params?: { incidentId?: string; moduleId?: string; applicationId?: string }) =>
+  getAll: (params?: { incidentId?: string; moduleId?: string; applicationId?: string } & WorkspaceScopeParams) =>
     api.get<Action[]>('/actions', { params }),
   create: (data: { name: string; incidentIds: string[] }) => api.post<Action>('/actions', data),
   update: (id: string, data: Partial<Action>) => api.put<Action>(`/actions/${id}`, data),
@@ -57,12 +62,12 @@ export const actionApi = {
 };
 
 export const tagApi = {
-  getAll: (categoryId?: string) =>
-    api.get<Tag[]>('/tags', { params: { categoryId } }),
+  getAll: (params?: { categoryId?: string } & WorkspaceScopeParams) =>
+    api.get<Tag[]>('/tags', { params }),
   create: (data: Partial<Tag>) => api.post<Tag>('/tags', data),
   update: (id: string, data: Partial<Tag>) => api.put<Tag>(`/tags/${id}`, data),
   delete: (id: string) => api.delete(`/tags/${id}`),
-  getCategories: () => api.get<TagCategory[]>('/tags/categories'),
+  getCategories: (params?: WorkspaceScopeParams) => api.get<TagCategory[]>('/tags/categories', { params }),
   createCategory: (data: Partial<TagCategory>) => api.post<TagCategory>('/tags/categories', data),
   updateCategory: (id: string, data: Partial<TagCategory>) => api.put<TagCategory>(`/tags/categories/${id}`, data),
   deleteCategory: (id: string) => api.delete(`/tags/categories/${id}`)

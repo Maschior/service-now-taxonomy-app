@@ -5,18 +5,32 @@ import {
   ChevronLeft, ChevronRight, Users, LogOut, User as UserIcon, MoreVertical, Building2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, Workspace } from '../contexts/AuthContext';
+import { useIsGlobalContext } from '../hooks/useIsGlobalContext';
+import { workspaceApi } from '../services/api';
 export default function Sidebar() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const { token, user, currentWorkspaceId, setCurrentWorkspaceId, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const isGlobalContext = useIsGlobalContext();
+  const showAllWorkspaces = user?.role === 'ADMIN' && isGlobalContext;
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
 
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileOpen(false);
   }, [location.pathname]);
+
+  // Admin no contexto Global pode trocar para qualquer workspace ativo, não só os atribuídos a ele.
+  useEffect(() => {
+    if (showAllWorkspaces) {
+      workspaceApi.getAll().then((res) => setAllWorkspaces(res.data)).catch(() => {});
+    }
+  }, [showAllWorkspaces]);
+
+  const switcherOptions = showAllWorkspaces ? allWorkspaces : (user?.workspaces ?? []);
 
   if (!token) return null;
 
@@ -110,7 +124,7 @@ export default function Sidebar() {
         <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-6 custom-scrollbar">
 
           {/* Workspace Switcher */}
-          {user && user.workspaces && user.workspaces.length > 0 && (
+          {user && switcherOptions.length > 0 && (
             <div className="flex flex-col gap-1 mb-2">
               {isExpanded && <span className="px-3 text-[11px] font-mono font-medium uppercase tracking-wider mb-1 text-ink-300">Workspace</span>}
 
@@ -120,7 +134,7 @@ export default function Sidebar() {
                   onChange={(e) => setCurrentWorkspaceId(e.target.value)}
                   className="form-input block p-2"
                 >
-                  {user.workspaces.map((ws) => (
+                  {switcherOptions.map((ws) => (
                     <option key={ws._id} value={ws._id}>
                       {ws.name} {ws.isGlobal ? '(Global)' : ''}
                     </option>
@@ -129,11 +143,11 @@ export default function Sidebar() {
               ) : (
                 <div
                   className="w-full flex justify-center py-2"
-                  title={user.workspaces.find(w => w._id === currentWorkspaceId)?.name || 'Workspace'}
+                  title={switcherOptions.find(w => w._id === currentWorkspaceId)?.name || 'Workspace'}
                 >
                   <div className="w-8 h-8 rounded-full bg-sunken flex items-center justify-center border border-line shadow-sm">
                     <span className="text-xs font-bold text-ink-900">
-                      {user.workspaces.find(w => w._id === currentWorkspaceId)?.name?.charAt(0).toUpperCase() || 'W'}
+                      {switcherOptions.find(w => w._id === currentWorkspaceId)?.name?.charAt(0).toUpperCase() || 'W'}
                     </span>
                   </div>
                 </div>

@@ -6,7 +6,7 @@ import { actionValidation, idValidation, validateRequest } from '../middleware/v
 import { ApiError } from '../middleware/errorHandler.js';
 import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
 import { requireAuth } from '../middleware/auth.js';
-import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
+import { requireWorkspace, WorkspaceRequest, resolveWorkspaceScope, getVisibleWorkspaceIds } from '../middleware/workspace.js';
 
 const router = Router();
 
@@ -16,8 +16,9 @@ router.use(requireWorkspace);
 router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const { incidentId, incidentIds: incidentIdsParam, moduleId, applicationId } = req.query;
+    const workspaceIds = await resolveWorkspaceScope(req);
     let filter: any = {
-      workspaceId: { $in: req.accessibleWorkspaceIds },
+      workspaceId: { $in: workspaceIds },
       isActive: true
     };
 
@@ -96,7 +97,8 @@ router.put('/:id', idValidation, actionValidation, validateRequest, async (req: 
       throw new ApiError(403, 'Apenas administradores podem editar registros globais.');
     }
 
-    if (targetAction.workspaceId.toString() !== req.currentWorkspaceId && targetAction.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetAction.workspaceId.toString())) {
        throw new ApiError(403, 'Sem permissão para editar esta ação.');
     }
 
@@ -125,7 +127,8 @@ router.delete('/:id', idValidation, validateRequest, async (req: WorkspaceReques
       throw new ApiError(403, 'Apenas administradores podem excluir registros globais.');
     }
 
-    if (targetAction.workspaceId.toString() !== req.currentWorkspaceId && targetAction.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetAction.workspaceId.toString())) {
       throw new ApiError(403, 'Sem permissão para excluir esta ação.');
     }
 

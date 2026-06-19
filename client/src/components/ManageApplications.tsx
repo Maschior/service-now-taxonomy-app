@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { applicationApi, handleApiError } from '../services/api';
+import { applicationApi, workspaceApi, handleApiError } from '../services/api';
 import { Application } from '../types/index';
-import { Plus, X, Package, Edit2, Trash2, Globe, Home, Check, Search } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { Alert, Badge, Button, Card, Checkbox, Input, Modal, Textarea } from './ui';
+import { Plus, X, Package, Edit2, Trash2, Globe, Home, Building2, Check, Search } from 'lucide-react';
+import { useAuth, Workspace } from '../contexts/AuthContext';
+import { useIsGlobalContext } from '../hooks/useIsGlobalContext';
+import { Alert, Badge, Button, Card, Checkbox, Input, Modal, Select, Textarea } from './ui';
 
 export default function ManageApplications() {
   const { user, currentWorkspaceId } = useAuth();
+  const isGlobalContext = useIsGlobalContext();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [workspaceFilter, setWorkspaceFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,14 +29,27 @@ export default function ManageApplications() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
+  // Lista de workspaces para o filtro/badges: admin no contexto Global vê todos os ativos; demais, só os seus.
+  const accessibleWorkspaces = isGlobalContext ? allWorkspaces : (user?.workspaces ?? []);
+
   useEffect(() => {
     fetchApplications();
   }, []);
 
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      workspaceApi.getAll().then((res) => setAllWorkspaces(res.data)).catch(() => {});
+    }
+  }, [user?.role]);
+
+  useEffect(() => {
+    setWorkspaceFilter('');
+  }, [currentWorkspaceId]);
+
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const res = await applicationApi.getAll();
+      const res = await applicationApi.getAll({ scope: 'all' });
       setApplications(res.data);
       setError(null);
     } catch (err) {
@@ -98,7 +115,10 @@ export default function ManageApplications() {
     }
   };
 
-  const filteredItems = applications.filter(app => app.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredItems = applications.filter(app =>
+    app.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (!workspaceFilter || app.workspaceId === workspaceFilter)
+  );
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredItems.length && filteredItems.length > 0) {
@@ -158,6 +178,16 @@ export default function ManageApplications() {
               onChange={(e) => setSearchTerm(e.target.value)}
               leftIcon={<Search size={16} strokeWidth={1.5} />}
             />
+            <Select
+              containerClassName="w-full md:w-56"
+              value={workspaceFilter}
+              onChange={(e) => setWorkspaceFilter(e.target.value)}
+            >
+              <option value="">Todos os Workspaces</option>
+              {accessibleWorkspaces.map((ws) => (
+                <option key={ws._id} value={ws._id}>{ws.name}{ws.isGlobal ? ' (Global)' : ''}</option>
+              ))}
+            </Select>
             {selectedIds.length > 0 && (
               <Button variant="danger" onClick={handleBulkDelete}>
                 Excluir ({selectedIds.length})
@@ -189,7 +219,11 @@ export default function ManageApplications() {
               <tbody>
                 {filteredItems.map(app => {
                   const isLocal = app.workspaceId === currentWorkspaceId;
-                  const canEdit = isLocal || user?.role === 'ADMIN';
+                  const isGlobalItem = accessibleWorkspaces.find((w) => w._id === app.workspaceId)?.isGlobal === true;
+                  const otherWorkspace = !isLocal && !isGlobalItem
+                    ? accessibleWorkspaces.find((w) => w._id === app.workspaceId)
+                    : undefined;
+                  const canEdit = isGlobalItem ? user?.role === 'ADMIN' : true;
 
                   return (
                   <tr key={app._id} className={`border-b border-line-subtle hover:bg-hover transition-colors group ${selectedIds.includes(app._id) ? 'bg-brand-tint' : ''}`}>
@@ -201,9 +235,9 @@ export default function ManageApplications() {
                       />
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant={isLocal ? 'neutral' : 'info'} withDot={false}>
-                        {isLocal ? <Home size={12} strokeWidth={1.7} /> : <Globe size={12} strokeWidth={1.7} />}
-                        {isLocal ? 'Local' : 'Global'}
+                      <Badge variant={isLocal ? 'neutral' : isGlobalItem ? 'info' : 'brand'} withDot={false}>
+                        {isLocal ? <Home size={12} strokeWidth={1.7} /> : isGlobalItem ? <Globe size={12} strokeWidth={1.7} /> : <Building2 size={12} strokeWidth={1.7} />}
+                        {isLocal ? 'Local' : isGlobalItem ? 'Global' : (otherWorkspace?.name ?? 'Outro Workspace')}
                       </Badge>
                     </td>
                     <td className="py-3 px-4 font-medium text-ink-900">

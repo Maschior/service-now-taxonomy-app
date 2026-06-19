@@ -83,9 +83,8 @@ function App() {
             </ErrorBoundary>
           </main>
           <footer className="py-3 mt-auto w-full text-center text-[11px] text-ink-500 flex justify-center items-center gap-2 border-t border-line bg-surface-2 cursor-default">
-            <span>Autor: <strong className="font-semibold text-ink-900">Matheus Delmaschio</strong></span>
+            <span>&copy; {new Date().getFullYear()} <strong className="font-semibold text-ink-900">Matheus Rubens Delmaschio Borges</strong>. Todos os direitos reservados.</span>
             <span className="w-1 h-1 rounded-full bg-ink-400"></span>
-            <span>Team: <strong className="font-semibold text-ink-900">Softtek</strong></span>
           </footer>
         </div>
       </div>

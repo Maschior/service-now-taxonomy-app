@@ -4,7 +4,7 @@ import { appValidation, idValidation, validateRequest } from '../middleware/vali
 import { ApiError } from '../middleware/errorHandler.js';
 import { getCaseInsensitiveQuery } from '../utils/validationHelper.js';
 import { requireAuth } from '../middleware/auth.js';
-import { requireWorkspace, WorkspaceRequest } from '../middleware/workspace.js';
+import { requireWorkspace, WorkspaceRequest, resolveWorkspaceScope, getVisibleWorkspaceIds } from '../middleware/workspace.js';
 
 const router = Router();
 
@@ -13,8 +13,9 @@ router.use(requireWorkspace);
 
 router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
+    const workspaceIds = await resolveWorkspaceScope(req);
     const apps = await Application.find({
-      workspaceId: { $in: req.accessibleWorkspaceIds },
+      workspaceId: { $in: workspaceIds },
       isActive: true
     }).sort({ name: 1 });
     res.json(apps);
@@ -60,7 +61,8 @@ router.put('/:id', idValidation, appValidation, validateRequest, async (req: Wor
       throw new ApiError(403, 'Apenas administradores podem editar registros globais.');
     }
 
-    if (targetApp.workspaceId.toString() !== req.currentWorkspaceId && targetApp.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetApp.workspaceId.toString())) {
        throw new ApiError(403, 'Sem permissão para editar esta aplicação.');
     }
 
@@ -89,7 +91,8 @@ router.delete('/:id', idValidation, validateRequest, async (req: WorkspaceReques
       throw new ApiError(403, 'Apenas administradores podem excluir registros globais.');
     }
 
-    if (targetApp.workspaceId.toString() !== req.currentWorkspaceId && targetApp.workspaceId.toString() !== req.globalWorkspaceId) {
+    const visible = await getVisibleWorkspaceIds(req);
+    if (!visible.includes(targetApp.workspaceId.toString())) {
       throw new ApiError(403, 'Sem permissão para excluir esta aplicação.');
     }
 
