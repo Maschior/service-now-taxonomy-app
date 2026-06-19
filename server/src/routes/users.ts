@@ -115,12 +115,12 @@ router.get('/', requireAdmin, async (req: WorkspaceRequest, res: Response, next:
 
 // Criar novo usuário e anexar ao Workspace Atual
 router.post('/', requireAdmin, [
-  body('name').trim().notEmpty(),
-  body('email').isEmail(),
-  body('password').isLength({ min: 6 }),
-  body('role').optional().isIn(['ADMIN', 'USER']),
-  body('workspaces').optional().isArray(),
-  body('workspaces.*').optional().isMongoId()
+  body('name').trim().notEmpty().withMessage('Nome é obrigatório'),
+  body('email').isEmail().withMessage('Email válido é obrigatório'),
+  body('password').isLength({ min: 6 }).withMessage('A senha deve ter no mínimo 6 caracteres'),
+  body('role').optional().isIn(['ADMIN', 'USER']).withMessage('Papel deve ser ADMIN ou USER'),
+  body('workspaces').optional().isArray().withMessage('Workspaces deve ser uma lista'),
+  body('workspaces.*').optional().isMongoId().withMessage('Cada workspace deve ter um ID válido')
 ], validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const { name, email, password, role, workspaces } = req.body;
@@ -160,11 +160,11 @@ router.post('/', requireAdmin, [
 });
 
 router.put('/:id', requireAdmin, idValidation, [
-  body('name').optional().trim(),
-  body('email').optional().isEmail(),
-  body('role').optional().isIn(['ADMIN', 'USER']),
-  body('workspaces').optional().isArray(),
-  body('workspaces.*').optional().isMongoId()
+  body('name').optional().trim().notEmpty().withMessage('Nome não pode ser vazio'),
+  body('email').optional().isEmail().withMessage('Email válido é obrigatório'),
+  body('role').optional().isIn(['ADMIN', 'USER']).withMessage('Papel deve ser ADMIN ou USER'),
+  body('workspaces').optional().isArray().withMessage('Workspaces deve ser uma lista'),
+  body('workspaces.*').optional().isMongoId().withMessage('Cada workspace deve ter um ID válido')
 ], validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const targetUser = await User.findById(req.params.id);
