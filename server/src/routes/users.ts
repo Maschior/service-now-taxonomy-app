@@ -1,6 +1,7 @@
 import { Router, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import Workspace from '../models/Workspace.js';
 import { body } from 'express-validator';
 import { validateRequest, idValidation } from '../middleware/validation.js';
 import { ApiError } from '../middleware/errorHandler.js';
@@ -82,6 +83,21 @@ const requireAdmin = (req: WorkspaceRequest, res: Response, next: NextFunction) 
   next();
 };
 
+// Conjunto de workspaces que o admin logado tem permissão de atribuir a outros usuários.
+// - Admin no contexto Global: pode atribuir qualquer workspace ativo.
+// - Admin local: pode atribuir apenas os workspaces aos quais ele próprio pertence.
+const getAssignableWorkspaceIds = async (req: WorkspaceRequest): Promise<string[]> => {
+  const isGlobalContext = req.currentWorkspaceId === req.globalWorkspaceId;
+  if (isGlobalContext) {
+    const all = await Workspace.find({ isActive: true }).select('_id');
+    return all.map((w) => w._id.toString());
+  }
+  const admin = await User.findById(req.user?.id).select('workspaces');
+  const ids = (admin?.workspaces || []).map((w) => w.toString());
+  if (req.currentWorkspaceId) ids.push(req.currentWorkspaceId);
+  return Array.from(new Set(ids));
+};
+
 // Listar todos os usuários pertencentes ao Workspace Atual
 router.get('/', requireAdmin, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
@@ -90,7 +106,7 @@ router.get('/', requireAdmin, async (req: WorkspaceRequest, res: Response, next:
       ? {} 
       : { workspaces: req.currentWorkspaceId };
 
-    const users = await User.find(filter).select('-passwordHash').sort({ name: 1 });
+    const users = await User.find(filter).select('-passwordHash').populate('workspaces').sort({ name: 1 });
     res.json(users);
   } catch (error) {
     next(error);
@@ -102,10 +118,12 @@ router.post('/', requireAdmin, [
   body('name').trim().notEmpty(),
   body('email').isEmail(),
   body('password').isLength({ min: 6 }),
-  body('role').optional().isIn(['ADMIN', 'USER'])
+  body('role').optional().isIn(['ADMIN', 'USER']),
+  body('workspaces').optional().isArray(),
+  body('workspaces.*').optional().isMongoId()
 ], validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, workspaces } = req.body;
 
     // Apenas Admins do workspace Global podem criar outros ADMINS.
     const isGlobalContext = req.currentWorkspaceId === req.globalWorkspaceId;
@@ -114,20 +132,28 @@ router.post('/', requireAdmin, [
     const existingUser = await User.findOne({ email });
     if (existingUser) throw new ApiError(400, 'Já existe um usuário com este email.');
 
+    // Resolve os workspaces solicitados contra o que o admin pode atribuir.
+    const assignable = await getAssignableWorkspaceIds(req);
+    let finalWorkspaces = Array.isArray(workspaces)
+      ? workspaces.filter((w: string) => assignable.includes(w))
+      : [];
+    if (finalWorkspaces.length === 0 && req.currentWorkspaceId) {
+      finalWorkspaces = [req.currentWorkspaceId];
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
-    
+
     const user = new User({
       name,
       email,
       passwordHash,
       role: finalRole,
-      workspaces: [req.currentWorkspaceId]
+      workspaces: finalWorkspaces
     });
 
     await user.save();
-    const userObj = user.toObject() as any;
-    delete userObj.passwordHash;
-    res.status(201).json(userObj);
+    const populated = await User.findById(user._id).select('-passwordHash').populate('workspaces');
+    res.status(201).json(populated);
   } catch (error) {
     next(error);
   }
@@ -136,7 +162,9 @@ router.post('/', requireAdmin, [
 router.put('/:id', requireAdmin, idValidation, [
   body('name').optional().trim(),
   body('email').optional().isEmail(),
-  body('role').optional().isIn(['ADMIN', 'USER'])
+  body('role').optional().isIn(['ADMIN', 'USER']),
+  body('workspaces').optional().isArray(),
+  body('workspaces.*').optional().isMongoId()
 ], validateRequest, async (req: WorkspaceRequest, res: Response, next: NextFunction) => {
   try {
     const targetUser = await User.findById(req.params.id);
@@ -148,7 +176,7 @@ router.put('/:id', requireAdmin, idValidation, [
       throw new ApiError(403, 'Você não tem permissão para editar este usuário.');
     }
 
-    const { name, email, role } = req.body;
+    const { name, email, role, workspaces } = req.body;
     if (email && email !== targetUser.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) throw new ApiError(400, 'Este email já está em uso.');
@@ -164,14 +192,27 @@ router.put('/:id', requireAdmin, idValidation, [
       }
     }
 
+    // Atribuição de workspaces: o admin só pode (des)atribuir os workspaces que controla.
+    // Workspaces fora do seu alcance (ex.: Global ou de outro locatário) são preservados.
+    if (Array.isArray(workspaces)) {
+      const assignable = await getAssignableWorkspaceIds(req);
+      const existing = targetUser.workspaces.map((w) => w.toString());
+      const preserved = existing.filter((w) => !assignable.includes(w));
+      const requested = workspaces.filter((w: string) => assignable.includes(w));
+      const merged = Array.from(new Set([...preserved, ...requested]));
+      if (merged.length === 0) {
+        throw new ApiError(400, 'O usuário deve pertencer a pelo menos um workspace.');
+      }
+      targetUser.workspaces = merged as any;
+    }
+
     targetUser.name = name || targetUser.name;
     targetUser.email = email || targetUser.email;
     targetUser.role = finalRole;
 
     await targetUser.save();
-    const userObj = targetUser.toObject() as any;
-    delete userObj.passwordHash;
-    res.json(userObj);
+    const populated = await User.findById(targetUser._id).select('-passwordHash').populate('workspaces');
+    res.json(populated);
   } catch (error) {
     next(error);
   }

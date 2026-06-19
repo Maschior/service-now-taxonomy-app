@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { userApi, handleApiError } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useEffect, useMemo } from 'react';
+import { userApi, workspaceApi, handleApiError } from '../services/api';
+import { useAuth, Workspace } from '../contexts/AuthContext';
 import { Shield, Trash2, Edit2, Check, X, UserPlus } from 'lucide-react';
 import { Alert, Badge, Button, Card, Input, Modal, Select } from './ui';
 
@@ -9,37 +9,98 @@ interface UserData {
   name: string;
   email: string;
   role: string;
+  workspaces: Workspace[];
 }
 
+// Lista de seleção (checkbox) de workspaces, reutilizada na criação e na edição.
+const WorkspacePicker: React.FC<{
+  options: Workspace[];
+  selected: string[];
+  onChange: (ids: string[]) => void;
+}> = ({ options, selected, onChange }) => {
+  const toggle = (id: string) => {
+    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);
+  };
+
+  if (options.length === 0) {
+    return <p className="text-xs text-ink-400">Nenhum workspace disponível para atribuição.</p>;
+  }
+
+  return (
+    <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+      {options.map((w) => (
+        <label key={w._id} className="flex items-center gap-2 text-sm text-ink-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={selected.includes(w._id)}
+            onChange={() => toggle(w._id)}
+            className="h-4 w-4 accent-[var(--brand)] cursor-pointer"
+          />
+          <span>{w.name}</span>
+          {w.isGlobal && <Badge variant="info" withDot={false}>Global</Badge>}
+        </label>
+      ))}
+    </div>
+  );
+};
+
 export const ManageUsers: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, currentWorkspaceId } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'USER' });
+  const [formData, setFormData] = useState<{ name: string; email: string; password: string; role: string; workspaces: string[] }>(
+    { name: '', email: '', password: '', role: 'USER', workspaces: [] }
+  );
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Inline Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<{ name: string; email: string; role: string }>({ name: '', email: '', role: 'USER' });
+  const [editData, setEditData] = useState<{ name: string; email: string; role: string; workspaces: string[] }>(
+    { name: '', email: '', role: 'USER', workspaces: [] }
+  );
+
+  // Quais workspaces o admin atual pode atribuir. No contexto Global, todos;
+  // caso contrário, apenas os workspaces aos quais o próprio admin pertence.
+  const assignableWorkspaces = useMemo<Workspace[]>(() => {
+    const isGlobalContext = currentUser?.workspaces?.some((w) => w.isGlobal && w._id === currentWorkspaceId);
+    return isGlobalContext ? allWorkspaces : (currentUser?.workspaces ?? []);
+  }, [allWorkspaces, currentUser, currentWorkspaceId]);
 
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     try {
-      const res = await userApi.getAll();
-      setUsers(res.data);
+      const [usersRes, workspacesRes] = await Promise.all([
+        userApi.getAll(),
+        workspaceApi.getAll().catch(() => ({ data: [] as Workspace[] }))
+      ]);
+      setUsers(usersRes.data);
+      setAllWorkspaces(workspacesRes.data as Workspace[]);
     } catch (err) {
       setError(handleApiError(err));
     } finally {
       setLoading(false);
     }
+  };
+
+  const openCreateModal = () => {
+    setFormError(null);
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      role: 'USER',
+      workspaces: currentWorkspaceId ? [currentWorkspaceId] : []
+    });
+    setIsModalOpen(true);
   };
 
   const handleCreate = async (closeModal: boolean) => {
@@ -48,17 +109,20 @@ export const ManageUsers: React.FC = () => {
       setFormError('Preencha todos os campos obrigatórios.');
       return;
     }
+    if (formData.workspaces.length === 0) {
+      setFormError('Selecione ao menos um workspace para o usuário.');
+      return;
+    }
     setFormLoading(true);
     try {
       const res = await userApi.create(formData);
       setUsers([...users, res.data]);
       if (closeModal) {
         setIsModalOpen(false);
-        setFormData({ name: '', email: '', password: '', role: 'USER' });
+        setFormData({ name: '', email: '', password: '', role: 'USER', workspaces: [] });
       } else {
-        // Keep email, password, role the same if needed, or clear all?
-        // For users, it's better to clear at least email and password.
-        setFormData({ name: '', email: '', password: '', role: formData.role });
+        // Mantém papel e workspaces para cadastros em sequência; limpa os dados pessoais.
+        setFormData({ name: '', email: '', password: '', role: formData.role, workspaces: formData.workspaces });
       }
     } catch (err) {
       setFormError(handleApiError(err));
@@ -71,7 +135,7 @@ export const ManageUsers: React.FC = () => {
     if (!window.confirm('Tem certeza que deseja remover este usuário do seu workspace?')) return;
     try {
       await userApi.delete(id);
-      setUsers(users.filter(u => u._id !== id));
+      setUsers(users.filter((u) => u._id !== id));
     } catch (err) {
       alert(handleApiError(err));
     }
@@ -79,7 +143,12 @@ export const ManageUsers: React.FC = () => {
 
   const startEdit = (u: UserData) => {
     setEditingId(u._id);
-    setEditData({ name: u.name, email: u.email, role: u.role });
+    setEditData({
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      workspaces: (u.workspaces ?? []).map((w) => w._id)
+    });
   };
 
   const cancelEdit = () => {
@@ -89,7 +158,7 @@ export const ManageUsers: React.FC = () => {
   const saveEdit = async (id: string) => {
     try {
       const res = await userApi.update(id, editData);
-      setUsers(users.map(u => (u._id === id ? res.data : u)));
+      setUsers(users.map((u) => (u._id === id ? res.data : u)));
       setEditingId(null);
     } catch (err) {
       alert(handleApiError(err));
@@ -111,10 +180,10 @@ export const ManageUsers: React.FC = () => {
           <Shield className="text-brand" size={28} strokeWidth={1.5} />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-ink-900 m-0">Gerenciamento de Usuários</h1>
-            <p className="text-ink-500 mt-1">Gerencie os acessos ao workspace.</p>
+            <p className="text-ink-500 mt-1">Gerencie os acessos e workspaces dos usuários.</p>
           </div>
         </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<UserPlus size={18} strokeWidth={2} />}>
+        <Button variant="primary" onClick={openCreateModal} leftIcon={<UserPlus size={18} strokeWidth={2} />}>
           Novo Usuário
         </Button>
       </div>
@@ -132,13 +201,14 @@ export const ManageUsers: React.FC = () => {
                   <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400">Nome</th>
                   <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400">Email</th>
                   <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400">Papel (Role)</th>
+                  <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400">Workspaces</th>
                   <th className="py-3 px-4 text-xs font-semibold uppercase tracking-wide text-ink-400 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-ink-400">
+                    <td colSpan={5} className="py-8 text-center text-ink-400">
                       Nenhum usuário encontrado.
                     </td>
                   </tr>
@@ -190,7 +260,28 @@ export const ManageUsers: React.FC = () => {
                           </Badge>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 align-top">
+                        {editingId === u._id ? (
+                          <WorkspacePicker
+                            options={assignableWorkspaces}
+                            selected={editData.workspaces}
+                            onChange={(ids) => setEditData({ ...editData, workspaces: ids })}
+                          />
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {(u.workspaces ?? []).length === 0 ? (
+                              <span className="text-xs text-ink-400">—</span>
+                            ) : (
+                              (u.workspaces ?? []).map((w) => (
+                                <Badge key={w._id} variant={w.isGlobal ? 'info' : 'neutral'} withDot={false}>
+                                  {w.name}
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right align-top">
                         {editingId === u._id ? (
                           <div className="flex justify-end gap-1">
                             <button onClick={() => saveEdit(u._id)} className="p-1.5 text-success-fg hover:bg-success-bg rounded-md transition-colors" title="Salvar">
@@ -268,6 +359,15 @@ export const ManageUsers: React.FC = () => {
             <option value="USER">USER (Comum)</option>
             <option value="ADMIN">ADMIN (Administrador)</option>
           </Select>
+
+          <div>
+            <label className="block text-[13px] font-semibold text-ink-700 mb-2">Workspaces</label>
+            <WorkspacePicker
+              options={assignableWorkspaces}
+              selected={formData.workspaces}
+              onChange={(ids) => setFormData({ ...formData, workspaces: ids })}
+            />
+          </div>
         </div>
       </Modal>
     </div>
