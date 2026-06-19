@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, Building2 } from 'lucide-react';
-import { useAuth, User } from '../contexts/AuthContext';
+import { useAuth, User, Workspace } from '../contexts/AuthContext';
 import { login } from '../services/authApi';
 import { Alert, Badge, Button, Card, CardBody, Checkbox, Input } from '../components/ui';
 
@@ -19,6 +19,12 @@ const Login: React.FC = () => {
   const [step, setStep] = useState<'LOGIN' | 'WORKSPACE'>('LOGIN');
   const [authData, setAuthData] = useState<{user: User, token: string} | null>(null);
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
+  const [rememberWorkspace, setRememberWorkspace] = useState(true);
+
+  const rememberKey = (userId: string) => `rememberedWorkspace:${userId}`;
+
+  const workspaceId = (workspace: Workspace | string): string =>
+    typeof workspace === 'string' ? workspace : workspace._id;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,18 +33,23 @@ const Login: React.FC = () => {
 
     try {
       const data = await login(email, password, rememberMe);
+      const workspaces = data.user.workspaces || [];
 
-      // If user has multiple workspaces, ask them to choose
-      if (data.user.workspaces && data.user.workspaces.length > 1) {
-         setAuthData({ user: data.user, token: data.token });
-         const firstWorkspaceId = typeof data.user.workspaces[0] === 'string'
-           ? data.user.workspaces[0]
-           : data.user.workspaces[0]._id;
-         setSelectedWorkspace(firstWorkspaceId);
-         setStep('WORKSPACE');
+      // Se o usuário já escolheu antes e marcou para lembrar, pula a seleção.
+      const remembered = localStorage.getItem(rememberKey(data.user.id));
+      const rememberedIsValid = remembered && workspaces.some((w: Workspace | string) => workspaceId(w) === remembered);
+
+      if (rememberedIsValid) {
+        loginContext(data.user, data.token, remembered as string);
+        navigate('/');
+      } else if (workspaces.length > 1) {
+        // Tem mais de um workspace e nenhuma escolha lembrada: perguntar.
+        setAuthData({ user: data.user, token: data.token });
+        setSelectedWorkspace(workspaceId(workspaces[0]));
+        setStep('WORKSPACE');
       } else {
-         loginContext(data.user, data.token);
-         navigate('/');
+        loginContext(data.user, data.token, workspaces[0] ? workspaceId(workspaces[0]) : undefined);
+        navigate('/');
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Falha no login. Verifique suas credenciais.');
@@ -50,6 +61,11 @@ const Login: React.FC = () => {
   const handleWorkspaceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (authData && selectedWorkspace) {
+      if (rememberWorkspace) {
+        localStorage.setItem(rememberKey(authData.user.id), selectedWorkspace);
+      } else {
+        localStorage.removeItem(rememberKey(authData.user.id));
+      }
       loginContext(authData.user, authData.token, selectedWorkspace);
       navigate('/');
     }
@@ -164,6 +180,12 @@ const Login: React.FC = () => {
                   })}
                 </div>
               </div>
+
+              <Checkbox
+                label="Lembrar minha escolha neste dispositivo"
+                checked={rememberWorkspace}
+                onChange={(e) => setRememberWorkspace(e.target.checked)}
+              />
 
               <div className="flex gap-3">
                 <Button
