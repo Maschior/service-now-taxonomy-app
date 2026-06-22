@@ -91,6 +91,7 @@ export interface ImportResponse {
   imported: number;
   skipped: number;
   errors?: string[];
+  resolved?: { applicationId: string; moduleId: string; incidentId: string; actionId: string };
 }
 
 export interface Workspace {

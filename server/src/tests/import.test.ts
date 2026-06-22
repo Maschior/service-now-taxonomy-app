@@ -222,6 +222,67 @@ describe('POST /import - CSV import with workspace scoping', () => {
       .expect(200); // Actually succeeds because middleware defaults to global workspace
   });
 
+  it('should return resolved chain IDs for a single new line', async () => {
+    const csvData = `"App9:Module9:Incident12:Action12"`;
+
+    const response = await request(app)
+      .post('/import')
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-workspace-id', workspace1._id.toString())
+      .send({ csvData })
+      .expect(200);
+
+    expect(response.body.resolved).toBeDefined();
+
+    const app9 = await Application.findOne({ name: 'App9', workspaceId: workspace1._id });
+    const mod9 = await Module.findOne({ name: 'Module9', workspaceId: workspace1._id });
+    const incident12 = await Incident.findOne({ name: 'Incident12', workspaceId: workspace1._id });
+    const action12 = await Action.findOne({ name: 'Action12', workspaceId: workspace1._id });
+
+    expect(response.body.resolved.applicationId).toBe(app9?._id.toString());
+    expect(response.body.resolved.moduleId).toBe(mod9?._id.toString());
+    expect(response.body.resolved.incidentId).toBe(incident12?._id.toString());
+    expect(response.body.resolved.actionId).toBe(action12?._id.toString());
+  });
+
+  it('should resolve to the existing entity when reusing a name with different case/whitespace', async () => {
+    await request(app)
+      .post('/import')
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-workspace-id', workspace1._id.toString())
+      .send({ csvData: `"App10:Module10:Incident13:Action13"` })
+      .expect(200);
+
+    const existingApp = await Application.findOne({ name: 'App10', workspaceId: workspace1._id });
+
+    const response2 = await request(app)
+      .post('/import')
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-workspace-id', workspace1._id.toString())
+      .send({ csvData: `"  app10  : Module10 :Incident14:Action14"` })
+      .expect(200);
+
+    expect(response2.body.resolved.applicationId).toBe(existingApp?._id.toString());
+
+    const apps = await Application.find({ name: 'App10', workspaceId: workspace1._id });
+    expect(apps).toHaveLength(1);
+  });
+
+  it('should not return resolved for multi-line bulk import', async () => {
+    const csvData = `"App11:Module11:Incident15:Action15"
+"App11:Module11:Incident16:Action16"`;
+
+    const response = await request(app)
+      .post('/import')
+      .set('Authorization', `Bearer ${token}`)
+      .set('x-workspace-id', workspace1._id.toString())
+      .send({ csvData })
+      .expect(200);
+
+    expect(response.body.imported).toBe(2);
+    expect(response.body.resolved).toBeUndefined();
+  });
+
   it('should skip lines with missing required fields', async () => {
     const csvData = `"App8:Module8:Incident10:Action10"
 "App8:Module8::Action11"

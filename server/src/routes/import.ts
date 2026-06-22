@@ -24,6 +24,8 @@ router.post('/', async (req: WorkspaceRequest, res: Response, next: NextFunction
     let imported = 0;
     let skipped = 0;
     const errors: string[] = [];
+    let resolved: { applicationId: string; moduleId: string; incidentId: string; actionId: string } | undefined;
+    const validLineCount = lines.filter((l: string) => l.trim() && !l.trim().toLowerCase().startsWith('"short_description"')).length;
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
       try {
@@ -127,6 +129,14 @@ router.post('/', async (req: WorkspaceRequest, res: Response, next: NextFunction
         }
 
         imported++;
+        if (validLineCount === 1) {
+          resolved = {
+            applicationId: app._id.toString(),
+            moduleId: mod._id.toString(),
+            incidentId: incident._id.toString(),
+            actionId: action._id.toString(),
+          };
+        }
       } catch (lineError) {
         skipped++;
         if (errors.length < 20) {
@@ -140,7 +150,8 @@ router.post('/', async (req: WorkspaceRequest, res: Response, next: NextFunction
       message: `Sucesso! Importados ${imported} registros, ignorados ${skipped}.`,
       imported,
       skipped,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
+      resolved
     });
   } catch (error) {
     next(error);
