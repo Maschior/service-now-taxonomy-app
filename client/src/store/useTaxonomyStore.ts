@@ -51,8 +51,14 @@ const initialFormData: TaxonomyFormData = {
   solucao: '',
 };
 
+// ponytail: crypto.randomUUID requires a secure context (HTTPS/localhost) and throws on plain HTTP
+const generateId = (): string =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 const createNewTab = (title: string = 'Novo Chamado'): Tab => ({
-  id: crypto.randomUUID(),
+  id: generateId(),
   title,
   isSaved: false,
   data: { ...initialFormData },
