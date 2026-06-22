@@ -1,7 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import TaxonomyForm from './TaxonomyForm';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
+import { importApi } from '../services/api';
 
 // Mock dependencies
 vi.mock('../hooks/useDarkMode', () => ({
@@ -19,13 +20,18 @@ vi.mock('../hooks/useTaxonomyData', () => ({
     loading: false,
     error: null,
     setError: vi.fn(),
+    refetch: vi.fn(),
   })
 }));
 
 vi.mock('../services/api', () => ({
   closureApi: {
     create: vi.fn().mockResolvedValue({}),
-  }
+  },
+  importApi: {
+    importCsv: vi.fn(),
+  },
+  handleApiError: vi.fn(() => 'erro'),
 }));
 
 // Mock icons
@@ -82,6 +88,44 @@ describe('TaxonomyForm Component', () => {
     const state = useTaxonomyStore.getState();
     const activeTab = state.tabs.find(t => t.id === state.activeTabId);
     expect(activeTab?.data.motivo).toBe('Motivo teste');
+  });
+
+  it('clear button resets the application selection (and cascades downstream)', () => {
+    render(<TaxonomyForm />);
+
+    fireEvent.click(screen.getByText('App 1'));
+    let state = useTaxonomyStore.getState();
+    let activeTab = state.tabs.find(t => t.id === state.activeTabId);
+    expect(activeTab?.data.selectedApp).toBe('app1');
+
+    fireEvent.click(screen.getByTitle('Limpar Aplicação'));
+    state = useTaxonomyStore.getState();
+    activeTab = state.tabs.find(t => t.id === state.activeTabId);
+    expect(activeTab?.data.selectedApp).toBe('');
+    expect(activeTab?.data.selectedModule).toBe('');
+  });
+
+  it('quick add resolves a chain and selects it in the active tab', async () => {
+    (importApi.importCsv as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: {
+        message: 'ok',
+        imported: 1,
+        skipped: 0,
+        resolved: { applicationId: 'app1', moduleId: 'mod1', incidentId: 'inc1', actionId: 'act1' },
+      },
+    });
+
+    render(<TaxonomyForm />);
+
+    const input = screen.getByPlaceholderText(/Adicionar rápido/i);
+    fireEvent.change(input, { target: { value: 'App 1:Module 1:Incident 1:Action 1' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    await waitFor(() => {
+      const state = useTaxonomyStore.getState();
+      const activeTab = state.tabs.find(t => t.id === state.activeTabId);
+      expect(activeTab?.data.selectedAction).toBe('act1');
+    });
   });
 
 });

@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2, Sun, Moon, Keyboard } from 'lucide-react';
+import { Clipboard, Check, Tag, LayoutTemplate, AlertCircle, Wrench, Sparkles, Save, Search, Undo2, Sun, Moon, Keyboard, X } from 'lucide-react';
 import { closureApi, handleApiError } from '../services/api';
 import { useDebounce } from '../hooks/useDebounce';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useTaxonomyData } from '../hooks/useTaxonomyData';
 import { useTaxonomyStore } from '../store/useTaxonomyStore';
+import QuickAddInput from './QuickAddInput';
 
 
 /** Utility to extract ID from a potentially populated field */
@@ -54,7 +55,7 @@ export default function TaxonomyForm() {
   const [closureSaved, setClosureSaved] = useState(false);
 
   // Data from API
-  const { applications, allModules, allIncidents, allActions, tags, tagCategories, loading, error, setError } = useTaxonomyData();
+  const { applications, allModules, allIncidents, allActions, tags, tagCategories, loading, error, setError, refetch } = useTaxonomyData();
 
   // ──────────────────── CASCADING FILTERS (SLICER LOGIC) ────────────────────
 
@@ -881,6 +882,21 @@ export default function TaxonomyForm() {
             </div>
 
             <div className="space-y-4 flex-1 flex flex-col min-h-0">
+              {/* Quick Add by text */}
+              <QuickAddInput
+                applications={applications}
+                allModules={allModules}
+                allIncidents={allIncidents}
+                allActions={allActions}
+                onResolved={(chain) => updateActiveTab({
+                  selectedApp: chain.applicationId,
+                  selectedModule: chain.moduleId,
+                  selectedIncident: chain.incidentId,
+                  selectedAction: chain.actionId,
+                })}
+                onCreated={refetch}
+              />
+
               {/* Application Chips */}
               <div>
                 <label className="flex items-center gap-3 text-xs font-medium mb-1" style={{ color: 'var(--ink-500)' }}>
@@ -896,6 +912,16 @@ export default function TaxonomyForm() {
                       style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
+                  {selectedApp && (
+                    <button
+                      type="button"
+                      onClick={() => autoSelectChain('app', '', true)}
+                      title="Limpar Aplicação"
+                      style={{ color: 'var(--ink-400)' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] p-1">
                   {searchedApplications.length > 0 ? (
@@ -939,6 +965,16 @@ export default function TaxonomyForm() {
                       style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
+                  {selectedModule && (
+                    <button
+                      type="button"
+                      onClick={() => autoSelectChain('module', '', true)}
+                      title="Limpar Módulo"
+                      style={{ color: 'var(--ink-400)' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[100px] p-1">
                   {searchedModuleNames.length > 0 ? (
@@ -993,6 +1029,16 @@ export default function TaxonomyForm() {
                       style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
+                  {selectedIncident && (
+                    <button
+                      type="button"
+                      onClick={() => autoSelectChain('incident', '', true)}
+                      title="Limpar Incidente"
+                      style={{ color: 'var(--ink-400)' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] p-1">
                   {searchedIncidents.length > 0 ? (
@@ -1031,6 +1077,16 @@ export default function TaxonomyForm() {
                       style={{ width: '120px', borderColor: 'var(--border)', color: 'var(--ink-900)' }}
                     />
                   </div>
+                  {selectedAction && (
+                    <button
+                      type="button"
+                      onClick={() => autoSelectChain('action', '', true)}
+                      title="Limpar Ação"
+                      style={{ color: 'var(--ink-400)' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                 </label>
                 <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[160px] p-1">
                   {searchedActions.length > 0 ? (
