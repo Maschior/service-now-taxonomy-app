@@ -8,6 +8,7 @@ export interface TaxonomyFormData {
   selectedAction: string;
   activeCategories: string[];
   selectedTags: string[];
+  ticketNumber: string;
   motivo: string;
   analise: string;
   solucao: string;
@@ -46,6 +47,7 @@ const initialFormData: TaxonomyFormData = {
   selectedAction: '',
   activeCategories: [],
   selectedTags: [],
+  ticketNumber: '',
   motivo: '',
   analise: '',
   solucao: '',

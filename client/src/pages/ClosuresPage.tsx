@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { closureApi, handleApiError } from '../services/api';
 import { Closure } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
-import { Search, Trash2, Calendar, LayoutTemplate, Tag as TagIcon } from 'lucide-react';
+import { Search, Trash2, Calendar, LayoutTemplate, Tag as TagIcon, Ticket } from 'lucide-react';
 import { Alert, Button } from '../components/ui';
 
 export default function ClosuresPage() {
@@ -100,7 +100,7 @@ export default function ClosuresPage() {
             <LayoutTemplate size={16} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
             <input
               type="text"
-              placeholder="Ex: App:Mod..."
+              placeholder="Ex: App:Mod... ou INC123"
               value={shortDesc}
               onChange={e => setShortDesc(e.target.value)}
               className="form-input pl-10 text-sm font-mono"
@@ -131,6 +131,9 @@ export default function ClosuresPage() {
                   {closure.shortDescription}
                 </h3>
                 <div className="flex items-center gap-4 text-xs text-ink-400">
+                  {closure.ticketNumber && (
+                    <span className="flex items-center gap-1 font-mono font-semibold text-brand"><Ticket size={12} /> {closure.ticketNumber}</span>
+                  )}
                   <span className="flex items-center gap-1"><Calendar size={12} /> {formatDate(closure.createdAt)}</span>
                   {closure.tags && closure.tags.length > 0 && (
                     <span className="flex items-center gap-1">

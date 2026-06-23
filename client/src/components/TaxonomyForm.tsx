@@ -39,16 +39,20 @@ export default function TaxonomyForm() {
   const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
   const formData = activeTab?.data || {
     selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '',
-    activeCategories: [], selectedTags: [], motivo: '', analise: '', solucao: ''
+    activeCategories: [], selectedTags: [], ticketNumber: '', motivo: '', analise: '', solucao: ''
   };
 
   const {
     selectedApp, selectedModule, selectedIncident, selectedAction,
-    activeCategories, selectedTags, motivo, analise, solucao
+    activeCategories, selectedTags, ticketNumber, motivo, analise, solucao
   } = formData;
 
   // Copy states
   const [copiedStates, setCopiedStates] = useState({ short: false, resolution: false });
+
+  // ponytail: override efêmero do Resolution Notes — não persiste em reload/troca de aba.
+  // Upgrade para TaxonomyFormData (store) se precisar persistir a edição manual.
+  const [notesOverride, setNotesOverride] = useState<string | null>(null);
 
   // Closure registration feedback
   const [savingClosure, setSavingClosure] = useState(false);
@@ -371,6 +375,14 @@ export default function TaxonomyForm() {
     [selectedTagNames, motivo, analise, solucao]
   );
 
+  // Valor exibido/usado: edição manual quando existir, senão o gerado
+  const notesValue = notesOverride ?? resolutionNotes;
+
+  // Reset da edição manual quando muda alguma dependência (aplica as atualizações)
+  useEffect(() => { setNotesOverride(null); }, [motivo, analise, solucao, selectedTagNames.join('|')]);
+  // Reset ao trocar de aba (o componente é reutilizado entre abas)
+  useEffect(() => { setNotesOverride(null); }, [activeTabId]);
+
   const handleCopy = (text: string, type: 'short' | 'resolution') => {
     if (!text) return;
 
@@ -441,11 +453,16 @@ export default function TaxonomyForm() {
       setError('Por favor, preencha todos os campos antes de registrar o fechamento.');
       return;
     }
+    if (ticketNumber.trim() && !/^(INC|SCTASK)\d+$/i.test(ticketNumber.trim())) {
+      setError('Número de chamado inválido (use INC... ou SCTASK...).');
+      return;
+    }
     try {
       setSavingClosure(true);
       await closureApi.create({
         shortDescription,
-        resolutionNotes,
+        resolutionNotes: notesValue,
+        ticketNumber: ticketNumber.trim() || undefined,
         applicationId: selectedApp || undefined,
         moduleId: selectedModule || undefined,
         incidentId: selectedIncident || undefined,
@@ -472,7 +489,7 @@ export default function TaxonomyForm() {
     } finally {
       setSavingClosure(false);
     }
-  }, [shortDescription, resolutionNotes, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete, markActiveTabAsSaved, activeTabId, removeTab]);
+  }, [shortDescription, notesValue, ticketNumber, selectedApp, selectedModule, selectedIncident, selectedAction, selectedTags, motivo, analise, solucao, isFormIncomplete, markActiveTabAsSaved, activeTabId, removeTab]);
 
   const executeClearAll = async (withSave: boolean) => {
     if (withSave) {
@@ -483,12 +500,12 @@ export default function TaxonomyForm() {
     setPreviousState({
       selectedApp, selectedModule, selectedIncident, selectedAction,
       activeCategories, selectedTags,
-      motivo, analise, solucao
+      ticketNumber, motivo, analise, solucao
     });
-    
+
     updateActiveTab({
       selectedApp: '', selectedModule: '', selectedIncident: '', selectedAction: '',
-      selectedTags: [], activeCategories: [], motivo: '', analise: '', solucao: ''
+      selectedTags: [], activeCategories: [], ticketNumber: '', motivo: '', analise: '', solucao: ''
     });
     
     setIsConfirmClearModalOpen(false);
@@ -661,6 +678,19 @@ export default function TaxonomyForm() {
 
         {/* Short Description (Middle) + Action Buttons (Right) */}
         <div className="flex-1 flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          {/* Ticket Number (left of Short Description) */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl flex-shrink-0" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+            <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--ink-400)' }}>Chamado:</span>
+            <input
+              type="text"
+              value={ticketNumber}
+              onChange={e => updateActiveTab({ ticketNumber: e.target.value.toUpperCase() })}
+              placeholder="INC... / SCTASK..."
+              className="font-mono text-xs font-semibold bg-transparent outline-none w-28"
+              style={{ color: 'var(--ink-900)' }}
+              title="Número do chamado (INC ou SCTASK) — opcional"
+            />
+          </div>
           {/* Short Description Bar */}
           <div className="flex-1 flex items-center gap-3 px-3.5 py-2 rounded-xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', minWidth: 0 }}>
             <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--ink-400)' }}>
@@ -759,7 +789,7 @@ export default function TaxonomyForm() {
                   <span className="text-xs font-semibold" style={{ color: 'var(--ink-400)' }}>Resolution Notes</span>
                 </div>
                 <button
-                  onClick={() => handleCopy(resolutionNotes, 'resolution')}
+                  onClick={() => handleCopy(notesValue, 'resolution')}
                   className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200"
                   style={{
                     color: copiedStates.resolution ? 'var(--success-fg)' : 'var(--brand)',
@@ -771,9 +801,15 @@ export default function TaxonomyForm() {
                 </button>
               </div>
               <div className="p-5">
-                <pre className="font-mono text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--ink-900)' }}>
-                  {resolutionNotes}
-                </pre>
+                <textarea
+                  value={notesValue}
+                  onChange={e => setNotesOverride(e.target.value)}
+                  rows={8}
+                  spellCheck={false}
+                  className="w-full resize-y font-mono text-sm whitespace-pre-wrap break-words bg-transparent outline-none"
+                  style={{ color: 'var(--ink-900)' }}
+                  title="Edite as notas se necessário (ex.: preencher o estágio em #Estágio_0). Alterar motivo/análise/solução/tags reaplica o texto gerado."
+                />
               </div>
             </div>
 

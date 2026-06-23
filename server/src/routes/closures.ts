@@ -26,7 +26,8 @@ router.get('/', async (req: WorkspaceRequest, res: Response, next: NextFunction)
         { resolutionNotes: searchRegex },
         { motivo: searchRegex },
         { analise: searchRegex },
-        { solucao: searchRegex }
+        { solucao: searchRegex },
+        { ticketNumber: searchRegex }
       ];
     }
 

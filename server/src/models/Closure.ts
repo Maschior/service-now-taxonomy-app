@@ -5,6 +5,7 @@ export interface IClosure extends Document {
   userId: mongoose.Types.ObjectId;
   shortDescription: string;
   resolutionNotes: string;
+  ticketNumber: string;
   applicationId?: mongoose.Types.ObjectId;
   moduleId?: mongoose.Types.ObjectId;
   incidentId?: mongoose.Types.ObjectId;
@@ -37,6 +38,12 @@ const closureSchema = new Schema<IClosure>(
       type: String,
       required: true,
       trim: true
+    },
+    ticketNumber: {
+      type: String,
+      default: '',
+      trim: true,
+      uppercase: true
     },
     applicationId: {
       type: Schema.Types.ObjectId,

@@ -83,6 +83,7 @@ export const closureApi = {
   create: (data: {
     shortDescription: string;
     resolutionNotes: string;
+    ticketNumber?: string;
     applicationId?: string;
     moduleId?: string;
     incidentId?: string;

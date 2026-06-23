@@ -40,6 +40,7 @@ export const tagValidation = [
 export const closureValidation = [
   body('shortDescription').trim().notEmpty().withMessage('Short description is required'),
   body('resolutionNotes').trim().notEmpty().withMessage('Resolution notes is required'),
+  body('ticketNumber').optional({ values: 'falsy' }).trim().matches(/^(INC|SCTASK)\d+$/i).withMessage('Número de chamado inválido (use INC... ou SCTASK...)'),
   body('applicationId').optional().isMongoId().withMessage('Valid application ID is required'),
   body('moduleId').optional().isMongoId().withMessage('Valid module ID is required'),
   body('incidentId').optional().isMongoId().withMessage('Valid incident ID is required'),

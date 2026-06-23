@@ -66,6 +66,7 @@ export interface Closure {
   _id: string;
   shortDescription: string;
   resolutionNotes: string;
+  ticketNumber?: string;
   applicationId?: string | Application;
   moduleId?: string | Module;
   incidentId?: string | Incident;
