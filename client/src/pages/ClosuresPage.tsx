@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { closureApi, tagApi, handleApiError } from '../services/api';
 import { Closure, Tag } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
-import { Search, Trash2, Calendar, LayoutTemplate, Tag as TagIcon, Ticket } from 'lucide-react';
+import { Search, Trash2, Calendar, LayoutTemplate, Tag as TagIcon, Ticket, ChevronDown } from 'lucide-react';
 import { Alert, Button } from '../components/ui';
 
 export default function ClosuresPage() {
@@ -26,6 +26,8 @@ export default function ClosuresPage() {
   // Tag filter
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
 
   useEffect(() => {
     tagApi.getAll().then(res => setAllTags(res.data)).catch(() => {});
@@ -119,28 +121,70 @@ export default function ClosuresPage() {
             />
           </div>
         </div>
-      </div>
 
-      {/* Tag filter */}
-      {allTags.length > 0 && (
-        <div className="section-card p-4">
-          <label className="block text-[13px] font-semibold mb-2 text-ink-700">Filtrar por Tags</label>
-          <div className="flex flex-wrap gap-2">
-            {allTags.map(tag => {
-              const active = selectedTagIds.includes(tag._id);
-              return (
-                <button
-                  key={tag._id}
-                  onClick={() => toggleTag(tag._id)}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${active ? 'bg-brand-tint border-brand text-brand font-semibold' : 'border-line-subtle text-ink-500 hover:text-ink-700'}`}
-                >
-                  {tag.name}
-                </button>
-              );
-            })}
+        {/* Tag filter dropdown */}
+        <div className="md:w-56">
+          <label className="block text-[13px] font-semibold mb-2 text-ink-700">Tags</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setTagMenuOpen(o => !o)}
+              className="form-input text-sm flex items-center justify-between gap-2 w-full"
+            >
+              <span className="flex items-center gap-2 truncate text-ink-700">
+                <TagIcon size={16} strokeWidth={1.5} className="text-ink-400" />
+                {selectedTagIds.length ? `${selectedTagIds.length} selecionada(s)` : 'Filtrar por tags'}
+              </span>
+              <ChevronDown size={16} className={`text-ink-400 transition-transform ${tagMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {tagMenuOpen && (
+              <>
+                {/* ponytail: backdrop click-to-close, no portal/lib */}
+                <div className="fixed inset-0 z-10" onClick={() => setTagMenuOpen(false)} />
+                <div className="absolute z-20 mt-1 w-full section-card p-2 shadow-lg max-h-72 flex flex-col">
+                  <div className="relative mb-2">
+                    <Search size={14} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Buscar tag..."
+                      value={tagSearch}
+                      onChange={e => setTagSearch(e.target.value)}
+                      className="form-input pl-8 text-sm py-1.5"
+                    />
+                  </div>
+                  {selectedTagIds.length > 0 && (
+                    <button
+                      onClick={() => setSelectedTagIds([])}
+                      className="text-xs text-ink-500 hover:text-ink-700 text-left px-1 mb-1"
+                    >
+                      Limpar seleção
+                    </button>
+                  )}
+                  <div className="overflow-y-auto">
+                    {allTags
+                      .filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase()))
+                      .map(tag => (
+                        <label key={tag._id} className="flex items-center gap-2 px-1 py-1.5 text-sm cursor-pointer rounded hover:bg-line-subtle/50">
+                          <input
+                            type="checkbox"
+                            checked={selectedTagIds.includes(tag._id)}
+                            onChange={() => toggleTag(tag._id)}
+                          />
+                          <span className="truncate text-ink-700">{tag.name}</span>
+                        </label>
+                      ))}
+                    {allTags.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
+                      <div className="text-xs text-ink-400 px-1 py-2">Nenhuma tag encontrada.</div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* List */}
       <div className="space-y-4">
