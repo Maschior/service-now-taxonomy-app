@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { closureApi, handleApiError } from '../services/api';
-import { Closure } from '../types';
+import { closureApi, tagApi, handleApiError } from '../services/api';
+import { Closure, Tag } from '../types';
 import { useDebounce } from '../hooks/useDebounce';
 import { Search, Trash2, Calendar, LayoutTemplate, Tag as TagIcon, Ticket } from 'lucide-react';
 import { Alert, Button } from '../components/ui';
@@ -23,15 +23,26 @@ export default function ClosuresPage() {
   const [shortDesc, setShortDesc] = useState('');
   const debouncedShortDesc = useDebounce(shortDesc, 500);
 
+  // Tag filter
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    tagApi.getAll().then(res => setAllTags(res.data)).catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetchClosures();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, debouncedSearch, debouncedShortDesc]);
+  }, [page, limit, debouncedSearch, debouncedShortDesc, selectedTagIds]);
 
   // Reset page to 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, debouncedShortDesc]);
+  }, [debouncedSearch, debouncedShortDesc, selectedTagIds]);
+
+  const toggleTag = (id: string) =>
+    setSelectedTagIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
 
   const fetchClosures = async () => {
     try {
@@ -40,7 +51,8 @@ export default function ClosuresPage() {
         page,
         limit,
         search: debouncedSearch || undefined,
-        shortDescription: debouncedShortDesc || undefined
+        shortDescription: debouncedShortDesc || undefined,
+        tags: selectedTagIds.length ? selectedTagIds.join(',') : undefined
       });
       setClosures(res.data.data);
       setTotalPages(res.data.pagination.totalPages);
@@ -108,6 +120,27 @@ export default function ClosuresPage() {
           </div>
         </div>
       </div>
+
+      {/* Tag filter */}
+      {allTags.length > 0 && (
+        <div className="section-card p-4">
+          <label className="block text-[13px] font-semibold mb-2 text-ink-700">Filtrar por Tags</label>
+          <div className="flex flex-wrap gap-2">
+            {allTags.map(tag => {
+              const active = selectedTagIds.includes(tag._id);
+              return (
+                <button
+                  key={tag._id}
+                  onClick={() => toggleTag(tag._id)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${active ? 'bg-brand-tint border-brand text-brand font-semibold' : 'border-line-subtle text-ink-500 hover:text-ink-700'}`}
+                >
+                  {tag.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* List */}
       <div className="space-y-4">
