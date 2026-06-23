@@ -57,7 +57,7 @@ function TopNav() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename="/taxonomy">
       <div className="flex min-h-screen">
         <Sidebar />
         <div className="flex-1 w-full min-w-0 flex flex-col relative">
