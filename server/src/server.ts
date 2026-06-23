@@ -30,9 +30,11 @@ const allowedOrigins = [
   'http://10.133.58.129:5173',
   'http://10.133.58.129:3000',
   'http://10.133.58.129:5005',
+  'http://10.133.58.129',
   'http://cbzlmdaassup06:5173',
   'http://cbzlmdaassup06:3000',
-  'http://cbzlmdaassup06:5005'
+  'http://cbzlmdaassup06:5005',
+  'http://cbzlmdaassup06'
 ];
 
 app.use(cors({
